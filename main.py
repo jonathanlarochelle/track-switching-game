@@ -8,7 +8,7 @@ import sys
 # import third-party modules
 
 # import your own module
-from Game import Game
+from game import Game
 
 VERSION = "0.1"
 APP_NAME = "Track Switching Game"
