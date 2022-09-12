@@ -6,7 +6,8 @@
 import pygame as pg
 
 # import your own module
-from tile import Tile
+from tracktile import TrackTile
+from constants import TILE_LENGTH
 
 global TILE_LENGTH
 
@@ -33,9 +34,10 @@ class Game:
         tiles = pg.sprite.Group()
         all = pg.sprite.Group()
 
-        Tile.containers = all, tiles
+        TrackTile.containers = all, tiles
 
-        Tile((1, 3))
+        TrackTile((1, 3), "mm", "md")
+        TrackTile((1, 3+TILE_LENGTH), "mu", "md")
 
         self.running = True
 
