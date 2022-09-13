@@ -172,4 +172,7 @@ class Map:
         pass
 
     def tile_at(self, pos: tuple[float]) -> TrackTile:
-        pass
+        # Get the tile at a certain position
+        for tile in self.tiles:
+            if tile.rect.collidepoint(pos):
+                return tile

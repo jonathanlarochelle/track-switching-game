@@ -54,6 +54,15 @@ class TrackTile(pygame.sprite.Sprite):
         self.image = pygame.Surface((TILE_LENGTH, TILE_LENGTH))
         self._update_image()
 
+    def switch_track(self):
+        # Switch track if tile has more than one track
+        if self.alt_path:
+            if self.active_path == "main":
+                self.active_path = "alt"
+            elif self.active_path == "alt":
+                self.active_path = "main"
+            self._update_image()
+
     def _update_image(self):
         # Portals and platforms have specific background text and colors
         if self.portal is not None:

@@ -35,7 +35,7 @@ class Game:
         pg.display.set_caption("Track Switching Game")
 
         # Initializing game entities
-        map = Map()
+        self.map = Map()
 
         # Initializing game clock
         self.clock = pygame.time.Clock()
@@ -45,12 +45,15 @@ class Game:
 
         # Game loop
         while self.running:
-            map.update()
+            # Update
+            self.map.update()
 
+            # User events
             self.handle_events()
 
+            # Re-draw screen
             self.screen.fill(pg.Color("white"))
-            map.draw(self.screen)
+            self.map.draw(self.screen)
             pg.display.update()
 
             self.clock.tick(self.FPS)
@@ -62,6 +65,11 @@ class Game:
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 self.running = False
+            if event.type == pg.MOUSEBUTTONDOWN:
+                # Handle click on TrackTile
+                clicked_tile = self.map.tile_at(pg.mouse.get_pos())
+                if clicked_tile is not None:
+                    clicked_tile.switch_track()
 
     def quit(self):
         pg.quit()
