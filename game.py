@@ -6,8 +6,11 @@
 import pygame as pg
 
 # import your own module
+import pygame.time
+
 from tracktile import TrackTile
 from constants import TILE_LENGTH
+from map import Map
 
 global TILE_LENGTH
 
@@ -17,7 +20,7 @@ class Game:
     """
 
     FPS = 30
-    SCREEN_WIDTH = 600
+    SCREEN_WIDTH = 768
     SCREEN_HEIGHT = 400
     TILE_LENGTH = 32
 
@@ -25,31 +28,32 @@ class Game:
         pg.init()
         self.screen = None
         self.running = False
+        self.clock = None
 
     def run(self):
         self.screen = pg.display.set_mode((self.SCREEN_WIDTH, self.SCREEN_HEIGHT))
         pg.display.set_caption("Track Switching Game")
 
-        # Set-up groups
-        tiles = pg.sprite.Group()
-        all = pg.sprite.Group()
+        # Initializing game entities
+        map = Map()
 
-        TrackTile.containers = all, tiles
+        # Initializing game clock
+        self.clock = pygame.time.Clock()
 
-        TrackTile((1, 3), "mm", "md")
-        TrackTile((1, 3+TILE_LENGTH), "mu", "md")
-
+        # Ready to go
         self.running = True
 
         # Game loop
         while self.running:
-            all.update()
+            map.update()
 
             self.handle_events()
 
             self.screen.fill(pg.Color("white"))
-            all.draw(self.screen)
+            map.draw(self.screen)
             pg.display.update()
+
+            self.clock.tick(self.FPS)
 
         # Game loop is over
         self.quit()
