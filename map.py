@@ -121,20 +121,21 @@ class Map:
                        TrackTile((15 * TILE_LENGTH, row * TILE_LENGTH), "md"),
                        TrackTile((17 * TILE_LENGTH, row * TILE_LENGTH), "ud")]
         row = 5
-        self.tiles += [TrackTile((10 * TILE_LENGTH, row * TILE_LENGTH), "um"),
-                       TrackTile((11 * TILE_LENGTH, row * TILE_LENGTH), "mm", "md"),
-                       TrackTile((12 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((13 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((14 * TILE_LENGTH, row * TILE_LENGTH), "mm", platform="6"),
-                       TrackTile((15 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((16 * TILE_LENGTH, row * TILE_LENGTH), "mm", "um"),
-                       TrackTile((17 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((18 * TILE_LENGTH, row * TILE_LENGTH), "mm", "um"),
-                       TrackTile((19 * TILE_LENGTH, row * TILE_LENGTH), "mm", "dm"),
-                       TrackTile((20 * TILE_LENGTH, row * TILE_LENGTH), "mm", "md"),
-                       TrackTile((21 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((22 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((23 * TILE_LENGTH, row * TILE_LENGTH), "mm", portal="F")]
+        self.tiles += [
+            TrackTile((10 * TILE_LENGTH, row * TILE_LENGTH), "um"),
+            TrackTile((11 * TILE_LENGTH, row * TILE_LENGTH), "mm", "md"),
+            TrackTile((12 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
+            TrackTile((13 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
+            TrackTile((14 * TILE_LENGTH, row * TILE_LENGTH), "mm", platform="6"),
+            TrackTile((15 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
+            TrackTile((16 * TILE_LENGTH, row * TILE_LENGTH), "mm", "um"),
+            TrackTile((17 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
+            TrackTile((18 * TILE_LENGTH, row * TILE_LENGTH), "mm", "um"),
+            TrackTile((19 * TILE_LENGTH, row * TILE_LENGTH), "mm", "dm"),
+            TrackTile((20 * TILE_LENGTH, row * TILE_LENGTH), "mm", "md"),
+            TrackTile((21 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
+            TrackTile((22 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
+            TrackTile((23 * TILE_LENGTH, row * TILE_LENGTH), "mm", portal="F")]
         row = 6
         self.tiles += [TrackTile((12 * TILE_LENGTH, row * TILE_LENGTH), "um"),
                        TrackTile((13 * TILE_LENGTH, row * TILE_LENGTH), "mm", "md"),

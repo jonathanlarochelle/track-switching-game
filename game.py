@@ -4,15 +4,15 @@
 
 # import third-party modules
 import pygame as pg
+import pygame.time
+from pygame.math import Vector2
 
 # import your own module
-import pygame.time
-
 from tracktile import TrackTile
 from constants import TILE_LENGTH
 from map import Map
+from train import Train
 
-global TILE_LENGTH
 
 class Game:
     """
@@ -20,9 +20,8 @@ class Game:
     """
 
     FPS = 30
-    SCREEN_WIDTH = 768
+    SCREEN_WIDTH = 24 * TILE_LENGTH
     SCREEN_HEIGHT = 400
-    TILE_LENGTH = 32
 
     def __init__(self):
         pg.init()
@@ -36,6 +35,7 @@ class Game:
 
         # Initializing game entities
         self.map = Map()
+        self.train = self._create_train("F")
 
         # Initializing game clock
         self.clock = pygame.time.Clock()
@@ -47,13 +47,16 @@ class Game:
         while self.running:
             # Update
             self.map.update()
+            self._update_trajectory()
+            self.train.update()
 
             # User events
-            self.handle_events()
+            self._handle_events()
 
             # Re-draw screen
             self.screen.fill(pg.Color("white"))
             self.map.draw(self.screen)
+            self.train.draw(self.screen)
             pg.display.update()
 
             self.clock.tick(self.FPS)
@@ -61,15 +64,67 @@ class Game:
         # Game loop is over
         self.quit()
 
-    def handle_events(self):
+    def _handle_events(self):
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 self.running = False
-            if event.type == pg.MOUSEBUTTONDOWN:
+            if event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
                 # Handle click on TrackTile
                 clicked_tile = self.map.tile_at(pg.mouse.get_pos())
                 if clicked_tile is not None:
                     clicked_tile.switch_track()
+
+    def _update_trajectory(self):
+        """
+        Monitors all trains's trajectory and associated pointers to 1) add trajectories from next tile and
+        2) delete trajectory from previous tile.
+        """
+        if self.train.speed > 0:
+            if (self.train.nose_position_pointer + self.train.speed) >= len(self.train.trajectory):
+                # We need to fetch trajectory information from next tile
+                train_vector = self.train.trajectory[-1] - self.train.trajectory[-2]
+                next_tile_position = self.train.trajectory[-1] + train_vector
+                for tile in self.map.tiles:
+                    if tile.rect.collidepoint(next_tile_position):
+                        self.train.trajectory += tile.get_trajectory()
+
+            if (self.train.tail_position_pointer + self.train.speed) >= TILE_LENGTH:
+                # We can delete trajectory information from last tile
+                self.train.trajectory = self.train.trajectory[TILE_LENGTH:]
+                self.train.nose_position_pointer -= TILE_LENGTH
+
+        elif self.train.speed < 0:
+            if (self.train.tail_position_pointer + self.train.speed) < 0:
+                # We need to fetch trajectory information from previous tile
+                train_vector = self.train.trajectory[0] - self.train.trajectory[1]
+                next_tile_position = self.train.trajectory[0] + train_vector
+                for tile in self.map.tiles:
+                    if tile.rect.collidepoint(next_tile_position):
+                        self.train.trajectory = tile.get_trajectory() + self.train.trajectory
+                self.train.nose_position_pointer += TILE_LENGTH
+
+            if (self.train.nose_position_pointer + self.train.speed) < (len(self.train.trajectory) - TILE_LENGTH):
+                # We can delete trajectory information from last tile
+                self.train.trajectory = self.train.trajectory[:-TILE_LENGTH]
+
+    def _create_train(self, portal: str) -> Train:
+        """
+        Temporary factory for Train()
+        """
+        train = Train()
+        spawn_tile = self.map.portals[portal]
+        tile_traj = spawn_tile.get_trajectory()
+        if portal in ["A", "B", "C"]:
+            for i in range(TILE_LENGTH):
+                train.trajectory.append(Vector2(-31+i, tile_traj[0].y))
+            train.speed = 1
+        elif portal in ["D", "E", "F", "G"]:
+            for i in range(TILE_LENGTH):
+                train.trajectory.append(Vector2(self.SCREEN_WIDTH + i, tile_traj[0].y))
+            train.speed = -1
+            train.original_image = pg.transform.flip(train.original_image, True, False)
+
+        return train
 
     def quit(self):
         pg.quit()
