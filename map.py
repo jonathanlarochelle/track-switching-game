@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # import built-in module
+import math
 
 # import third-party modules
 import pygame as pg
@@ -15,148 +16,35 @@ class Map:
     Represents a map of tiles
     """
 
-    tiles: list[TrackTile]
-    portals: dict[str, TrackTile]
-    platforms: dict[str, TrackTile]
-    rows: int
-    cols: int
-
     def __init__(self):
-        self.tiles = list()
-        # Map is manually generated, row by row (for now ...)
-        row = 0
-        self.tiles += [TrackTile((0 * TILE_LENGTH, row * TILE_LENGTH), "mm", portal="A"),
-                       TrackTile((1 * TILE_LENGTH, row * TILE_LENGTH), "mm", "md"),
-                       TrackTile((2 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((3 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((4 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((5 * TILE_LENGTH, row * TILE_LENGTH), "mm", "md"),
-                       TrackTile((6 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((7 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((8 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((9 * TILE_LENGTH, row * TILE_LENGTH), "mm", "dm"),
-                       TrackTile((10 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((11 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((12 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((13 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((14 * TILE_LENGTH, row * TILE_LENGTH), "mm", platform="1"),
-                       TrackTile((15 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((16 * TILE_LENGTH, row * TILE_LENGTH), "mm", "dm"),
-                       TrackTile((17 * TILE_LENGTH, row * TILE_LENGTH), "mm", "md"),
-                       TrackTile((18 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((19 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((20 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((21 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((22 * TILE_LENGTH, row * TILE_LENGTH), "mm", "dm"),
-                       TrackTile((23 * TILE_LENGTH, row * TILE_LENGTH), "mm", portal="D")]
-        row = 1
-        self.tiles += [TrackTile((2 * TILE_LENGTH, row * TILE_LENGTH), "ud"),
-                       TrackTile((6 * TILE_LENGTH, row * TILE_LENGTH), "um"),
-                       TrackTile((7 * TILE_LENGTH, row * TILE_LENGTH), "mm", "dm"),
-                       TrackTile((8 * TILE_LENGTH, row * TILE_LENGTH), "mm", "mu"),
-                       TrackTile((9 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((10 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((11 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((12 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((13 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((14 * TILE_LENGTH, row * TILE_LENGTH), "mm", platform="2"),
-                       TrackTile((15 * TILE_LENGTH, row * TILE_LENGTH), "mm", "mu"),
-                       TrackTile((16 * TILE_LENGTH, row * TILE_LENGTH), "md"),
-                       TrackTile((18 * TILE_LENGTH, row * TILE_LENGTH), "ud"),
-                       TrackTile((21 * TILE_LENGTH, row * TILE_LENGTH), "du")]
-        row = 2
-        self.tiles += [TrackTile((0 * TILE_LENGTH, row * TILE_LENGTH), "mm", portal="B"),
-                       TrackTile((1 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((2 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((3 * TILE_LENGTH, row * TILE_LENGTH), "mm", "um"),
-                       TrackTile((4 * TILE_LENGTH, row * TILE_LENGTH), "mm", "md"),
-                       TrackTile((5 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((6 * TILE_LENGTH, row * TILE_LENGTH), "mm", "mu"),
-                       TrackTile((7 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((8 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((9 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((10 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((11 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((12 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((13 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((14 * TILE_LENGTH, row * TILE_LENGTH), "mm", platform="3"),
-                       TrackTile((15 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((16 * TILE_LENGTH, row * TILE_LENGTH), "mm", "dm"),
-                       TrackTile((17 * TILE_LENGTH, row * TILE_LENGTH), "mm", "um"),
-                       TrackTile((18 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((19 * TILE_LENGTH, row * TILE_LENGTH), "mm", "um"),
-                       TrackTile((20 * TILE_LENGTH, row * TILE_LENGTH), "mm", "mu"),
-                       TrackTile((21 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((22 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((23 * TILE_LENGTH, row * TILE_LENGTH), "mm", portal="E")]
-        row = 3
-        self.tiles += [TrackTile((5 * TILE_LENGTH, row * TILE_LENGTH), "um"),
-                       TrackTile((6 * TILE_LENGTH, row * TILE_LENGTH), "mm", "md"),
-                       TrackTile((7 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((8 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((9 * TILE_LENGTH, row * TILE_LENGTH), "mm", "dm"),
-                       TrackTile((10 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((11 * TILE_LENGTH, row * TILE_LENGTH), "mm", "md"),
-                       TrackTile((12 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((13 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((14 * TILE_LENGTH, row * TILE_LENGTH), "mm", platform="4"),
-                       TrackTile((15 * TILE_LENGTH, row * TILE_LENGTH), "mm", "mu"),
-                       TrackTile((16 * TILE_LENGTH, row * TILE_LENGTH), "md")]
-        row = 4
-        self.tiles += [TrackTile((0 * TILE_LENGTH, row * TILE_LENGTH), "mm", portal="C"),
-                       TrackTile((1 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((2 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((3 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((4 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((5 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((6 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((7 * TILE_LENGTH, row * TILE_LENGTH), "mm", "um"),
-                       TrackTile((8 * TILE_LENGTH, row * TILE_LENGTH), "mm", "mu"),
-                       TrackTile((9 * TILE_LENGTH, row * TILE_LENGTH), "mm", "md"),
-                       TrackTile((10 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((11 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((12 * TILE_LENGTH, row * TILE_LENGTH), "mm", "um"),
-                       TrackTile((13 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((14 * TILE_LENGTH, row * TILE_LENGTH), "mm", platform="5"),
-                       TrackTile((15 * TILE_LENGTH, row * TILE_LENGTH), "md"),
-                       TrackTile((17 * TILE_LENGTH, row * TILE_LENGTH), "ud")]
-        row = 5
-        self.tiles += [
-            TrackTile((10 * TILE_LENGTH, row * TILE_LENGTH), "um"),
-            TrackTile((11 * TILE_LENGTH, row * TILE_LENGTH), "mm", "md"),
-            TrackTile((12 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-            TrackTile((13 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-            TrackTile((14 * TILE_LENGTH, row * TILE_LENGTH), "mm", platform="6"),
-            TrackTile((15 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-            TrackTile((16 * TILE_LENGTH, row * TILE_LENGTH), "mm", "um"),
-            TrackTile((17 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-            TrackTile((18 * TILE_LENGTH, row * TILE_LENGTH), "mm", "um"),
-            TrackTile((19 * TILE_LENGTH, row * TILE_LENGTH), "mm", "dm"),
-            TrackTile((20 * TILE_LENGTH, row * TILE_LENGTH), "mm", "md"),
-            TrackTile((21 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-            TrackTile((22 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-            TrackTile((23 * TILE_LENGTH, row * TILE_LENGTH), "mm", portal="F")]
-        row = 6
-        self.tiles += [TrackTile((12 * TILE_LENGTH, row * TILE_LENGTH), "um"),
-                       TrackTile((13 * TILE_LENGTH, row * TILE_LENGTH), "mm", "md"),
-                       TrackTile((14 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((15 * TILE_LENGTH, row * TILE_LENGTH), "mm", platform="7"),
-                       TrackTile((16 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((17 * TILE_LENGTH, row * TILE_LENGTH), "mm", "dm"),
-                       TrackTile((18 * TILE_LENGTH, row * TILE_LENGTH), "mm", "mu"),
-                       TrackTile((19 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((20 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((21 * TILE_LENGTH, row * TILE_LENGTH), "mm", "um"),
-                       TrackTile((22 * TILE_LENGTH, row * TILE_LENGTH), "mm"),
-                       TrackTile((23 * TILE_LENGTH, row * TILE_LENGTH), "mm", portal="G")]
-        row = 7
-        self.tiles += [TrackTile((14 * TILE_LENGTH, row * TILE_LENGTH), "um"),
-                       TrackTile((15 * TILE_LENGTH, row * TILE_LENGTH), "mm", platform="8"),
-                       TrackTile((16 * TILE_LENGTH, row * TILE_LENGTH), "mu")]
+        map_array = [["mm+A", "mm+md", "mm", "mm", "mm", "mm+md", "mm", "mm", "mm", "mm+dm", "mm", "mm", "mm", "mm",
+                      "mm+1", "mm", "mm+dm", "mm+md", "mm", "mm", "mm", "mm", "mm+dm", "mm+D"],
+                     ["", "", "ud", "", "", "", "um", "mm+dm", "mm+mu", "mm", "mm", "mm", "mm", "mm", "mm+2", "mm+mu",
+                      "md", "", "ud", "", "", "du", "", ""],
+                     ["mm+B", "mm", "mm", "mm+um", "mm+md", "mm", "mm+mu", "mm", "mm", "mm", "mm", "mm", "mm", "mm",
+                      "mm+3", "mm", "mm+dm", "mm+um", "mm", "mm+um", "mm+mu", "mm", "mm", "mm+E"],
+                     ["", "", "", "", "", "um", "mm+md", "mm", "mm", "mm+dm", "mm", "mm+md", "mm", "mm", "mm+4",
+                      "mm+mu", "md", "", "", "", "", "", "", ""],
+                     ["mm+C", "mm", "mm", "mm", "mm", "mm", "mm", "mm+um", "mm+mu", "mm+md", "mm", "mm", "mm+um", "mm",
+                      "mm+5", "md", "", "ud", "", "", "", "", "", ""],
+                     ["", "", "", "", "", "", "", "", "", "", "um", "mm+md", "mm", "mm", "mm+6", "mm", "mm+um", "mm",
+                      "mm+um", "mm+dm", "mm+md", "mm", "mm", "mm+F"],
+                     ["", "", "", "", "", "", "", "", "", "", "", "", "um", "mm+md", "mm", "mm+7", "mm", "mm+dm",
+                      "mm+mu", "mm", "mm", "mm+um", "mm", "mm+G"],
+                     ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "um", "mm+8", "mu", "", "", "", "", "",
+                      "", ""]]
+
+        self._parse_raw_map(map_array)
+
+        self._tiles_list = list()
+        for row in self.tiles_array:
+            for tile in row:
+                if tile:
+                    self._tiles_list.append(tile)
 
         self.portals = dict()
         self.platforms = dict()
-        for tile in self.tiles:
+        for tile in self._tiles_list:
             if tile.portal is not None:
                 self.portals[tile.portal] = tile
             if tile.platform is not None:
@@ -166,7 +54,7 @@ class Map:
         pass
 
     def draw(self, surf: pg.surface.Surface):
-        for tile in self.tiles:
+        for tile in self._tiles_list:
             surf.blit(tile.image, tile.rect)
 
     def set_tile(self, row: int, col: int, tile: TrackTile):
@@ -174,6 +62,41 @@ class Map:
 
     def tile_at(self, pos: tuple[float]) -> TrackTile:
         # Get the tile at a certain position
-        for tile in self.tiles:
-            if tile.rect.collidepoint(pos):
-                return tile
+        col = math.floor(pos[0]/TILE_LENGTH)
+        row = math.floor(pos[1]/TILE_LENGTH)
+        return self.tiles_array[row][col]
+
+    def _parse_raw_map(self, raw_map):
+        self.tiles_array = list()
+        for row_id, row in enumerate(raw_map):
+            tile_row = list()
+            for col_id, el in enumerate(row):
+                if el == "":
+                    tile_row.append(None)
+                else:
+                    tracktile_mainpath = None
+                    tracktile_altpath = None
+                    tracktile_portal = None
+                    tracktile_platform = None
+
+                    params = el.split("+")
+
+                    for param in params:
+                        if len(param) == 2:
+                            if not tracktile_mainpath:
+                                tracktile_mainpath = param
+                            else:
+                                tracktile_altpath = param
+                        elif len(param) == 1:
+                            if param.isdigit():
+                                tracktile_platform = param
+                            else:
+                                tracktile_portal = param
+                        else:
+                            pass
+
+                    tile_row.append(TrackTile((col_id * TILE_LENGTH, row_id * TILE_LENGTH),
+                                              tracktile_mainpath, tracktile_altpath, tracktile_portal, tracktile_platform))
+            self.tiles_array.append(tile_row)
+            del tile_row # Check if necessary
+

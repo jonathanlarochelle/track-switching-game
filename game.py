@@ -35,7 +35,7 @@ class Game:
 
         # Initializing game entities
         self.map = Map()
-        self.train = self._create_train("F")
+        self.train = self._create_train("C")
 
         # Initializing game clock
         self.clock = pygame.time.Clock()
@@ -69,10 +69,11 @@ class Game:
             if event.type == pg.QUIT:
                 self.running = False
             if event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
-                # Handle click on TrackTile
+                # Handle click on TrackTile only if no train is currently on it
                 clicked_tile = self.map.tile_at(pg.mouse.get_pos())
                 if clicked_tile is not None:
-                    clicked_tile.switch_track()
+                    if not clicked_tile.rect.colliderect(self.train.rect):
+                        clicked_tile.switch_track()
 
     def _update_trajectory(self):
         """
@@ -84,9 +85,10 @@ class Game:
                 # We need to fetch trajectory information from next tile
                 train_vector = self.train.trajectory[-1] - self.train.trajectory[-2]
                 next_tile_position = self.train.trajectory[-1] + train_vector
-                for tile in self.map.tiles:
-                    if tile.rect.collidepoint(next_tile_position):
-                        self.train.trajectory += tile.get_trajectory()
+                new_trajectory = self.map.tile_at(next_tile_position).get_trajectory()
+                # Check if our entry point is valid for the next tile
+                if next_tile_position in new_trajectory:
+                    self.train.trajectory += new_trajectory
 
             if (self.train.tail_position_pointer + self.train.speed) >= TILE_LENGTH:
                 # We can delete trajectory information from last tile
@@ -98,10 +100,11 @@ class Game:
                 # We need to fetch trajectory information from previous tile
                 train_vector = self.train.trajectory[0] - self.train.trajectory[1]
                 next_tile_position = self.train.trajectory[0] + train_vector
-                for tile in self.map.tiles:
-                    if tile.rect.collidepoint(next_tile_position):
-                        self.train.trajectory = tile.get_trajectory() + self.train.trajectory
-                self.train.nose_position_pointer += TILE_LENGTH
+                new_trajectory = self.map.tile_at(next_tile_position).get_trajectory()
+                # Check if our entry point is valid for the next tile
+                if next_tile_position in new_trajectory:
+                    self.train.trajectory = new_trajectory + self.train.trajectory
+                    self.train.nose_position_pointer += TILE_LENGTH
 
             if (self.train.nose_position_pointer + self.train.speed) < (len(self.train.trajectory) - TILE_LENGTH):
                 # We can delete trajectory information from last tile
