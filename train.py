@@ -22,15 +22,19 @@ class Train(pg.sprite.Sprite):
         self.image = self.original_image
         self.rect = self.image.get_rect()
 
-        self.speed = 0
+        self.length = self.image.get_width()
+
         self.trajectory = list()
-        self.nose_position_pointer = 30
+        self.nose_position_pointer = 31
+
+        self.moving = False
+        self.direction = None
 
     def update(self):
-        self.nose_position_pointer += self.speed
+        self.nose_position_pointer += self.trajectory_pointer_increment
         if self.nose_position_pointer >= len(self.trajectory) or self.tail_position_pointer < 0:
             # No trajectory defined, we do not move.
-            self.nose_position_pointer -= self.speed
+            self.nose_position_pointer -= self.trajectory_pointer_increment
         else:
             # Axles move forward or backwards in trajectory list
             axle_1_pos = self.trajectory[self.axle_1_position_pointer]
@@ -45,11 +49,21 @@ class Train(pg.sprite.Sprite):
             self.rect = self.image.get_rect(center=self.rect.center)
 
     def draw(self, screen: pg.surface.Surface):
+        pg.draw.rect(screen, pg.color.Color("red"), self.rect, width=1)
         screen.blit(self.image, self.rect)
+
+    def start(self, direction):
+        # Sets train in movement in desired direction.
+        self.direction = direction
+        self.moving = True
+
+    def stop(self):
+        # Stops train
+        self.moving = False
 
     @property
     def tail_position_pointer(self):
-        return self.nose_position_pointer - 29
+        return self.nose_position_pointer - self.length
 
     @property
     def axle_1_position_pointer(self):
@@ -58,3 +72,13 @@ class Train(pg.sprite.Sprite):
     @property
     def axle_2_position_pointer(self):
         return self.tail_position_pointer + 10
+
+    @property
+    def trajectory_pointer_increment(self):
+        if self.moving:
+            if self.direction == "forward":
+                return +1
+            elif self.direction == "backward":
+                return -1
+        else:
+            return 0

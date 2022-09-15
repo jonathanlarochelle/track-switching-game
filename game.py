@@ -35,7 +35,7 @@ class Game:
 
         # Initializing game entities
         self.map = Map()
-        self.train = self._create_train("C")
+        self.train = self._create_train("D")
 
         # Initializing game clock
         self.clock = pygame.time.Clock()
@@ -69,10 +69,23 @@ class Game:
             if event.type == pg.QUIT:
                 self.running = False
             if event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
-                # Handle click on TrackTile only if no train is currently on it
-                clicked_tile = self.map.tile_at(pg.mouse.get_pos())
-                if clicked_tile is not None:
-                    if not clicked_tile.rect.colliderect(self.train.rect):
+                mouse_position = pg.mouse.get_pos()
+                clicked_tile = self.map.tile_at(mouse_position)
+
+                # Clicking on train toggles between start/stop
+                if self.train.rect.collidepoint(mouse_position):
+                    if self.train.moving:
+                        self.train.stop()
+                    else:
+                        self.train.start(self.train.direction)
+
+                # Clicking on tile switches the track, if no train is currently on it.
+                elif clicked_tile:
+                    # Not colliding with train.rect here because for some reason the rect overlaps to next tile when
+                    # train is not yet on it (sometimes).
+                    # TODO: Correct this.
+                    if (not clicked_tile.rect.collidepoint(self.train.trajectory[self.train.nose_position_pointer])) \
+                            and (not clicked_tile.rect.collidepoint(self.train.trajectory[self.train.tail_position_pointer])):
                         clicked_tile.switch_track()
 
     def _update_trajectory(self):
@@ -80,8 +93,8 @@ class Game:
         Monitors all trains's trajectory and associated pointers to 1) add trajectories from next tile and
         2) delete trajectory from previous tile.
         """
-        if self.train.speed > 0:
-            if (self.train.nose_position_pointer + self.train.speed) >= len(self.train.trajectory):
+        if self.train.moving and self.train.direction == "forward":
+            if (self.train.nose_position_pointer + self.train.trajectory_pointer_increment) >= len(self.train.trajectory):
                 # We need to fetch trajectory information from next tile
                 train_vector = self.train.trajectory[-1] - self.train.trajectory[-2]
                 next_tile_position = self.train.trajectory[-1] + train_vector
@@ -90,13 +103,13 @@ class Game:
                 if next_tile_position in new_trajectory:
                     self.train.trajectory += new_trajectory
 
-            if (self.train.tail_position_pointer + self.train.speed) >= TILE_LENGTH:
+            if (self.train.tail_position_pointer + self.train.trajectory_pointer_increment) >= TILE_LENGTH:
                 # We can delete trajectory information from last tile
                 self.train.trajectory = self.train.trajectory[TILE_LENGTH:]
                 self.train.nose_position_pointer -= TILE_LENGTH
 
-        elif self.train.speed < 0:
-            if (self.train.tail_position_pointer + self.train.speed) < 0:
+        elif self.train.moving and self.train.direction == "backward":
+            if (self.train.tail_position_pointer + self.train.trajectory_pointer_increment) < 0:
                 # We need to fetch trajectory information from previous tile
                 train_vector = self.train.trajectory[0] - self.train.trajectory[1]
                 next_tile_position = self.train.trajectory[0] + train_vector
@@ -106,7 +119,7 @@ class Game:
                     self.train.trajectory = new_trajectory + self.train.trajectory
                     self.train.nose_position_pointer += TILE_LENGTH
 
-            if (self.train.nose_position_pointer + self.train.speed) < (len(self.train.trajectory) - TILE_LENGTH):
+            if (self.train.nose_position_pointer + self.train.trajectory_pointer_increment) < (len(self.train.trajectory) - TILE_LENGTH):
                 # We can delete trajectory information from last tile
                 self.train.trajectory = self.train.trajectory[:-TILE_LENGTH]
 
@@ -120,11 +133,11 @@ class Game:
         if portal in ["A", "B", "C"]:
             for i in range(TILE_LENGTH):
                 train.trajectory.append(Vector2(-31+i, tile_traj[0].y))
-            train.speed = 1
+            train.start("forward")
         elif portal in ["D", "E", "F", "G"]:
             for i in range(TILE_LENGTH):
                 train.trajectory.append(Vector2(self.SCREEN_WIDTH + i, tile_traj[0].y))
-            train.speed = -1
+            train.start("backward")
             train.original_image = pg.transform.flip(train.original_image, True, False)
 
         return train
