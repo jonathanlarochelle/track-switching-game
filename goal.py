@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import annotations  # Solves circular import problem with referencing game
+
 # import built-in module
 import abc
 
 # import third-party modules
-import pygame as pg
 
 # import your own module
 import game
@@ -20,7 +20,7 @@ class Goal(abc.ABC):
     """
 
     @abc.abstractmethod
-    def __init__(self, game: game.Game, current_train: train.Train):
+    def __init__(self, game: game.Game, train: train.Train):
         pass
 
     @abc.abstractmethod
@@ -64,8 +64,6 @@ class PlatformGoal(Goal):
                 if self._platform_collider.contains(self._train.rect):
                     self._goal_achieved = True
 
-        print(f"PlatformGoal: {self.is_achieved}")
-
 
 class ExitPortalGoal(Goal):
     """
@@ -98,5 +96,3 @@ class ExitPortalGoal(Goal):
             if self._train.state == "despawned":
                 if self._good_portal:
                     self._goal_achieved = True
-
-        print(f"PortalGoal: {self.is_achieved}")

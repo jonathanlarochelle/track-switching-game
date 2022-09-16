@@ -11,7 +11,7 @@ import pygame as pg
 
 class WagonSprite(pg.sprite.Sprite):
     """
-    Representation of a wagon
+    Representation of a wagon.
     """
 
     def __init__(self, image, flip_wagon=False):

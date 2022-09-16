@@ -3,17 +3,14 @@
 # import built-in module
 
 # import third-party modules
-import pygame.sprite
-import pygame.image
-import pygame.draw
-import pygame.font
+import pygame as pg
 from pygame.math import Vector2
 
 # import your own module
 from constants import TILE_LENGTH
 
 
-class TrackTile(pygame.sprite.Sprite):
+class TrackTile(pg.sprite.Sprite):
     """
     Represents a track tile on the game map.
     """
@@ -23,7 +20,7 @@ class TrackTile(pygame.sprite.Sprite):
                            "d": TILE_LENGTH - 1}
 
     def __init__(self, pos: tuple, main_path: str, alternative_path: str = None, portal: str = None,
-                 platform: str = None, *groups: pygame.sprite.AbstractGroup):
+                 platform: str = None, *groups: pg.sprite.AbstractGroup):
         super().__init__(*groups)
         self.position = pos
         self.main_path = main_path
@@ -33,7 +30,7 @@ class TrackTile(pygame.sprite.Sprite):
 
         self.active_path = "main"
 
-        self._font = pygame.font.SysFont("Verdana", 30)
+        self._font = pg.font.SysFont("Verdana", 30)
 
         self._main_path_points = [(0, self.PATH_CHAR_TO_COORDS[self.main_path[0]]),
                                   (TILE_LENGTH / 2 - 1, TILE_LENGTH / 2 - 1),
@@ -45,7 +42,7 @@ class TrackTile(pygame.sprite.Sprite):
         else:
             self._alt_path_points = list()
 
-        self.image = pygame.Surface((TILE_LENGTH, TILE_LENGTH))
+        self.image = pg.Surface((TILE_LENGTH, TILE_LENGTH))
         self._update_image()
 
     def switch_track(self):
@@ -90,35 +87,35 @@ class TrackTile(pygame.sprite.Sprite):
     def _update_image(self):
         # Portals and platforms have specific background text and colors
         if self.portal is not None:
-            self.image.fill(pygame.Color("blue"))
-            text = self._font.render(self.portal, True, pygame.Color("darkblue"))
+            self.image.fill(pg.Color("blue"))
+            text = self._font.render(self.portal, True, pg.Color("darkblue"))
             self.image.blit(text, (3, 1))
         elif self.platform is not None:
-            self.image.fill(pygame.Color("green"))
-            text = self._font.render(self.platform, True, pygame.Color("darkgreen"))
+            self.image.fill(pg.Color("green"))
+            text = self._font.render(self.platform, True, pg.Color("darkgreen"))
             self.image.blit(text, (6, 1))
         else:
-            self.image.fill(pygame.Color("white"))
+            self.image.fill(pg.Color("white"))
 
         # Draw inactive path in grey
-        tmp_tile = pygame.surface.Surface((TILE_LENGTH, TILE_LENGTH), pygame.SRCALPHA)
+        tmp_tile = pg.surface.Surface((TILE_LENGTH, TILE_LENGTH), pg.SRCALPHA)
         if self.active_path == "alt":
-            tmp_tile = pygame.image.load(f"assets/tiles/{self.main_path}.png").convert_alpha()
+            tmp_tile = pg.image.load(f"assets/tiles/{self.main_path}.png").convert_alpha()
         elif self.active_path == "main" and self.alt_path:
-            tmp_tile = pygame.image.load(f"assets/tiles/{self.alt_path}.png").convert_alpha()
+            tmp_tile = pg.image.load(f"assets/tiles/{self.alt_path}.png").convert_alpha()
         tmp_tile.set_alpha(128)
         self.image.blit(tmp_tile, (0, 0))
 
         # Draw active path in black
         if self.active_path == "main":
-            tmp_tile = pygame.image.load(f"assets/tiles/{self.main_path}.png").convert_alpha()
+            tmp_tile = pg.image.load(f"assets/tiles/{self.main_path}.png").convert_alpha()
         elif self.active_path == "alt" and self.alt_path:
-            tmp_tile = pygame.image.load(f"assets/tiles/{self.alt_path}.png").convert_alpha()
+            tmp_tile = pg.image.load(f"assets/tiles/{self.alt_path}.png").convert_alpha()
         self.image.blit(tmp_tile, (0, 0))
 
         # Draw trajectory in red on top (debug)
         for point in self.get_trajectory():
-            self.image.fill(pygame.Color("red"), (point - self.position, (1, 1)))
+            self.image.fill(pg.Color("red"), (point - self.position, (1, 1)))
 
         self.rect = self.image.get_rect()
         self.rect.x = self.position[0]

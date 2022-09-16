@@ -56,15 +56,9 @@ class Map:
                 except KeyError:
                     self.platforms[tile.platform] = pg.sprite.Group(tile)
 
-    def update(self):
-        pass
-
     def draw(self, surf: pg.surface.Surface):
         for tile in self._tiles_list:
             surf.blit(tile.image, tile.rect)
-
-    def set_tile(self, row: int, col: int, tile: TrackTile):
-        pass
 
     def tile_at(self, pos: tuple[float]) -> TrackTile:
         # Get the tile at a certain position

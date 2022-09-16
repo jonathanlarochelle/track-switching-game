@@ -1,16 +1,13 @@
 # -*- coding: utf-8 -*-
 
 # import built-in module
-import math
 
 # import third-party modules
 import pygame as pg
 from pygame.math import Vector2
 
 # import your own module
-from map import Map
 from wagonsprite import WagonSprite
-import goal
 
 
 class Train:
@@ -20,16 +17,15 @@ class Train:
     """
 
     def __init__(self):
-
+        # Set-up wagons
         self.wagons = []
         self.wagons.append(WagonSprite("assets/trains/ice_loc.png"))
         self.wagons.append(WagonSprite("assets/trains/ice_wagon.png"))
-        # self.wagons.append(WagonSprite("assets/trains/ice_loc.png", True))
+        self.wagons.append(WagonSprite("assets/trains/ice_loc.png", True))
 
         self.goals = []
-
         self.trajectory = list()
-        self.nose_position_pointer = None  # Initialized when calling spawn()
+        self.rightmost_position_pointer = None  # Initialized when calling spawn()
 
         self.moving = False
         self.direction = None
@@ -38,16 +34,21 @@ class Train:
         self.state = "waiting for spawn"
 
     def update(self):
+        """
+        Update position of the train
+        """
         if self.state == "spawned":
             # Update position
-            self.nose_position_pointer += self.trajectory_pointer_increment
-            if self.nose_position_pointer >= len(self.trajectory) or self.tail_position_pointer < 0:
+            self.rightmost_position_pointer += self.trajectory_pointer_increment
+            if self.rightmost_position_pointer >= len(self.trajectory) or self.leftmost_position_pointer < 0:
                 # No trajectory defined, we do not move.
-                self.nose_position_pointer -= self.trajectory_pointer_increment
+                self.rightmost_position_pointer -= self.trajectory_pointer_increment
             else:
-                current_offset = self.nose_position_pointer
+                current_offset = self.rightmost_position_pointer
 
                 for wagon in self.wagons:
+                    # Should the position of the axles be handled individually by each wagon?
+                    # Do we want wagons to have a variable axle offset??
                     axle_1_pointer = current_offset - 5
                     axle_2_pointer = current_offset - 25
                     position_axle_1 = self.trajectory[axle_1_pointer]
@@ -59,48 +60,66 @@ class Train:
             self._update_goals()
 
     def draw(self, screen: pg.surface.Surface):
+        """
+        Draw the train.
+        """
         if self.state == "spawned":
             for wagon in self.wagons:
                 wagon.draw(screen)
 
     def start(self, direction):
-        # Sets train in movement in desired direction.
+        """
+        Sets train in movement in desired direction.
+        """
         self.direction = direction
         self.moving = True
 
     def stop(self):
-        # Stops train
+        """
+        Train stops.
+        """
         self.moving = False
 
     def spawn(self):
-        # Spawns train
+        """
+        Spawn train.
+        """
         self._init_pointer()
         self.state = "spawned"
         self.start(self.direction)
 
     def despawn(self):
-        # Despawns train
+        """
+        Despawn train.
+        """
         self.state = "despawned"
         self.stop()
         self._update_goals()
 
     def _init_pointer(self):
+        """
+        Initialize the trajectory pointer.
+        TODO: Do everything with just one pointer. Nose of the train should be pointed to direction of movement, always.
+        """
         if self.direction == "forward":
-            self.nose_position_pointer = len(self.trajectory) - 1
+            self.rightmost_position_pointer = len(self.trajectory) - 1
         elif self.direction == "backward":
-            self.tail_position_pointer = 0
+            self.leftmost_position_pointer = 0
 
     def _update_goals(self):
+        """
+        Check the status of goals.
+        """
         for goal in self.goals:
             goal.update()
 
     @property
-    def tail_position_pointer(self):
-        return self.nose_position_pointer - self.length
+    def leftmost_position_pointer(self):
+        return self.rightmost_position_pointer - self.length
 
-    @tail_position_pointer.setter
-    def tail_position_pointer(self, p):
-        self.nose_position_pointer = p + self.length
+    @leftmost_position_pointer.setter
+    def leftmost_position_pointer(self, p):
+        self.rightmost_position_pointer = p + self.length
 
     @property
     def trajectory_pointer_increment(self):

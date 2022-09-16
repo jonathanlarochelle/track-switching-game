@@ -1,24 +1,22 @@
 # -*- coding: utf-8 -*-
 
 # import built-in module
-from math import ceil
+import math
 
 # import third-party modules
 import pygame as pg
-import pygame.time
 from pygame.math import Vector2
 
 # import your own module
-from tracktile import TrackTile
 from constants import TILE_LENGTH
 from map import Map
 from train import Train
-import goal
+from goal import PlatformGoal, ExitPortalGoal
 
 
 class Game:
     """
-    Game class.
+    Game class. Start the game with the run() method.
     """
 
     FPS = 30
@@ -34,6 +32,9 @@ class Game:
         self.trains = []
 
     def run(self):
+        """
+        Start the game.
+        """
         self.screen = pg.display.set_mode((self.SCREEN_WIDTH, self.SCREEN_HEIGHT), flags=pg.RESIZABLE | pg.SCALED)
         pg.display.set_caption("Track Switching Game")
 
@@ -43,7 +44,7 @@ class Game:
         # self.trains.append(self._create_train("D", "1", "A"))
 
         # Initializing game clock
-        self.clock = pygame.time.Clock()
+        self.clock = pg.time.Clock()
 
         # Ready to go
         self.running = True
@@ -51,7 +52,6 @@ class Game:
         # Game loop
         while self.running:
             # Update
-            self.map.update()
             self._update_trajectory()
             for train in self.trains:
                 train.update()
@@ -73,6 +73,9 @@ class Game:
         self.quit()
 
     def _handle_events(self):
+        """
+        Handle user events
+        """
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 self.running = False
@@ -94,8 +97,8 @@ class Game:
                     # train is not yet on it (sometimes).
                     # TODO: Correct this.
                     for train in self.trains:
-                        point_1 = train.trajectory[train.nose_position_pointer]
-                        point_2 = train.trajectory[train.tail_position_pointer]
+                        point_1 = train.trajectory[train.rightmost_position_pointer]
+                        point_2 = train.trajectory[train.leftmost_position_pointer]
                         if clicked_tile.rect.collidepoint(point_1) or clicked_tile.rect.collidepoint(point_2):
                             break
                     else:
@@ -105,10 +108,11 @@ class Game:
         """
         Monitors all trains's trajectory and associated pointers to 1) add trajectories from next tile and
         2) delete trajectory from previous tile.
+        Note: These operations should be somewhere else, not sure where yet.
         """
         for train in self.trains:
             if train.moving and train.direction == "forward":
-                if (train.nose_position_pointer + train.trajectory_pointer_increment) >= len(train.trajectory):
+                if (train.rightmost_position_pointer + train.trajectory_pointer_increment) >= len(train.trajectory):
                     # We need to fetch trajectory information from next tile
                     train_vector = train.trajectory[-1] - train.trajectory[-2]
                     next_tile_position = train.trajectory[-1] + train_vector
@@ -124,13 +128,13 @@ class Game:
                         last_point = train.trajectory[-1]
                         train.trajectory += [last_point + Vector2(i, 0) for i in range(TILE_LENGTH)]
 
-                if (train.tail_position_pointer + train.trajectory_pointer_increment) >= TILE_LENGTH:
+                if (train.leftmost_position_pointer + train.trajectory_pointer_increment) >= TILE_LENGTH:
                     # We can delete trajectory information from last tile
                     train.trajectory = train.trajectory[TILE_LENGTH:]
-                    train.nose_position_pointer -= TILE_LENGTH
+                    train.rightmost_position_pointer -= TILE_LENGTH
 
             elif train.moving and train.direction == "backward":
-                if (train.tail_position_pointer + train.trajectory_pointer_increment) < 0:
+                if (train.leftmost_position_pointer + train.trajectory_pointer_increment) < 0:
                     # We need to fetch trajectory information from previous tile
                     train_vector = train.trajectory[0] - train.trajectory[1]
                     next_tile_position = train.trajectory[0] + train_vector
@@ -140,19 +144,22 @@ class Game:
                         # Check if our entry point is valid for the next tile
                         if next_tile_position in new_trajectory:
                             train.trajectory = new_trajectory + train.trajectory
-                            train.nose_position_pointer += TILE_LENGTH
+                            train.rightmost_position_pointer += TILE_LENGTH
                     else:
                         # No next tile, which means we are headed out of playing field.
                         # Padding with a straight trajectory for now.
                         last_point = train.trajectory[0]
                         train.trajectory = [last_point + Vector2(-TILE_LENGTH+i, 0) for i in range(TILE_LENGTH)] + train.trajectory
-                        train.nose_position_pointer += TILE_LENGTH
+                        train.rightmost_position_pointer += TILE_LENGTH
 
-                if (train.nose_position_pointer + train.trajectory_pointer_increment) < (len(train.trajectory) - TILE_LENGTH):
+                if (train.rightmost_position_pointer + train.trajectory_pointer_increment) < (len(train.trajectory) - TILE_LENGTH):
                     # We can delete trajectory information from last tile
                     train.trajectory = train.trajectory[:-TILE_LENGTH]
 
     def _check_for_despawn(self):
+        """
+        Note: These operations should be somewhere else, not sure where yet.
+        """
         for train in self.trains:
             if train.state == "spawned":
                 if not self.screen.get_rect().colliderect(train.rect):
@@ -162,16 +169,17 @@ class Game:
     def _create_train(self, portal: str, platform_goal: str, portal_goal: str) -> Train:
         """
         Temporary factory for Train()
+        Note: These operations should be somewhere else, not sure where yet.
         """
         train = Train()
-        train.goals.append(goal.PlatformGoal(self, train, platform_goal))
-        train.goals.append(goal.ExitPortalGoal(self, train, portal_goal))
+        train.goals.append(PlatformGoal(self, train, platform_goal))
+        train.goals.append(ExitPortalGoal(self, train, portal_goal))
         spawn_tile = self.map.portals[portal].sprites()[0]
         tile_traj = spawn_tile.get_trajectory()
 
         # We pad the trajectory with "phantom" tiles to the left or right of the screen,
         # depending on where the train is coming from
-        nb_padding_tiles = ceil(train.length / TILE_LENGTH)
+        nb_padding_tiles = math.ceil(train.length / TILE_LENGTH)
         if portal in ["A", "B", "C"]:
             for i in range(nb_padding_tiles * TILE_LENGTH):
                 train.trajectory.append(Vector2(-(nb_padding_tiles*TILE_LENGTH)+i, tile_traj[0].y))
@@ -186,4 +194,7 @@ class Game:
         return train
 
     def quit(self):
+        """
+        Clean-up and quit the game.
+        """
         pg.quit()
