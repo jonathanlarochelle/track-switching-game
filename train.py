@@ -9,25 +9,27 @@ from pygame.math import Vector2
 
 # import your own module
 from map import Map
+from wagonsprite import WagonSprite
+import goal
 
 
-class Train(pg.sprite.Sprite):
+class Train:
     """
-    [Class docstring]
+    Represents a self-contained train, which is composed of wagons.
+    The train's movement follow points stored in trajectory.
     """
 
-    def __init__(self, *groups: pg.sprite.AbstractGroup):
-        super().__init__(*groups)
+    def __init__(self):
 
-        # Sprite
-        self.original_image = pg.image.load("assets/trains/ice_loc.png").convert_alpha()
-        self.image = self.original_image
-        self.rect = self.image.get_rect()
+        self.wagons = []
+        self.wagons.append(WagonSprite("assets/trains/ice_loc.png"))
+        self.wagons.append(WagonSprite("assets/trains/ice_wagon.png"))
+        # self.wagons.append(WagonSprite("assets/trains/ice_loc.png", True))
 
-        self.length = self.original_image.get_width()
+        self.goals = []
 
         self.trajectory = list()
-        self.nose_position_pointer = 31
+        self.nose_position_pointer = None  # Initialized when calling spawn()
 
         self.moving = False
         self.direction = None
@@ -37,27 +39,29 @@ class Train(pg.sprite.Sprite):
 
     def update(self):
         if self.state == "spawned":
+            # Update position
             self.nose_position_pointer += self.trajectory_pointer_increment
             if self.nose_position_pointer >= len(self.trajectory) or self.tail_position_pointer < 0:
                 # No trajectory defined, we do not move.
                 self.nose_position_pointer -= self.trajectory_pointer_increment
             else:
-                # Axles move forward or backwards in trajectory list
-                axle_1_pos = self.trajectory[self.axle_1_position_pointer]
-                axle_2_pos = self.trajectory[self.axle_2_position_pointer]
+                current_offset = self.nose_position_pointer
 
-                # Draw sprite based on axle position
-                diff_vector = axle_1_pos - axle_2_pos
-                angle = math.atan(diff_vector.y/diff_vector.x)/math.pi*180
-                self.image = pg.transform.rotate(self.original_image, -angle)
-                self.rect = self.image.get_rect()
-                self.rect.centerx = (axle_1_pos.x + axle_2_pos.x) / 2
-                self.rect.centery = (axle_1_pos.y + axle_2_pos.y) / 2
+                for wagon in self.wagons:
+                    axle_1_pointer = current_offset - 5
+                    axle_2_pointer = current_offset - 25
+                    position_axle_1 = self.trajectory[axle_1_pointer]
+                    position_axle_2 = self.trajectory[axle_2_pointer]
+                    wagon.update(position_axle_1, position_axle_2)
+                    current_offset -= wagon.length
+
+            # Check for goals
+            self._update_goals()
 
     def draw(self, screen: pg.surface.Surface):
         if self.state == "spawned":
-            pg.draw.rect(screen, pg.color.Color("red"), self.rect, width=1)
-            screen.blit(self.image, self.rect)
+            for wagon in self.wagons:
+                wagon.draw(screen)
 
     def start(self, direction):
         # Sets train in movement in desired direction.
@@ -70,6 +74,7 @@ class Train(pg.sprite.Sprite):
 
     def spawn(self):
         # Spawns train
+        self._init_pointer()
         self.state = "spawned"
         self.start(self.direction)
 
@@ -77,6 +82,17 @@ class Train(pg.sprite.Sprite):
         # Despawns train
         self.state = "despawned"
         self.stop()
+        self._update_goals()
+
+    def _init_pointer(self):
+        if self.direction == "forward":
+            self.nose_position_pointer = len(self.trajectory) - 1
+        elif self.direction == "backward":
+            self.tail_position_pointer = 0
+
+    def _update_goals(self):
+        for goal in self.goals:
+            goal.update()
 
     @property
     def tail_position_pointer(self):
@@ -87,14 +103,6 @@ class Train(pg.sprite.Sprite):
         self.nose_position_pointer = p + self.length
 
     @property
-    def axle_1_position_pointer(self):
-        return self.nose_position_pointer - 10
-
-    @property
-    def axle_2_position_pointer(self):
-        return self.tail_position_pointer + 10
-
-    @property
     def trajectory_pointer_increment(self):
         if self.moving:
             if self.direction == "forward":
@@ -103,4 +111,19 @@ class Train(pg.sprite.Sprite):
                 return -1
         else:
             return 0
+
+    @property
+    def length(self):
+        length = 0
+        for wagon in self.wagons:
+            length += wagon.length
+        return length
+
+    @property
+    def rect(self):
+        if self.wagons:
+            rect = self.wagons[0].rect
+            return rect.unionall([wagon.rect for wagon in self.wagons])
+        else:
+            return None
 

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # import built-in module
+from math import ceil
 
 # import third-party modules
 import pygame as pg
@@ -12,6 +13,7 @@ from tracktile import TrackTile
 from constants import TILE_LENGTH
 from map import Map
 from train import Train
+import goal
 
 
 class Game:
@@ -20,7 +22,7 @@ class Game:
     """
 
     FPS = 30
-    SCREEN_WIDTH = 24 * TILE_LENGTH
+    SCREEN_WIDTH = 26 * TILE_LENGTH
     SCREEN_HEIGHT = 400
 
     def __init__(self):
@@ -37,8 +39,8 @@ class Game:
 
         # Initializing game entities
         self.map = Map()
-        self.trains.append(self._create_train("B"))
-        self.trains.append(self._create_train("D"))
+        self.trains.append(self._create_train("B", "3", "E"))
+        # self.trains.append(self._create_train("D", "1", "A"))
 
         # Initializing game clock
         self.clock = pygame.time.Clock()
@@ -157,26 +159,29 @@ class Game:
                     # Train is out of the game surface
                     train.despawn()
 
-    def _create_train(self, portal: str) -> Train:
+    def _create_train(self, portal: str, platform_goal: str, portal_goal: str) -> Train:
         """
         Temporary factory for Train()
         """
         train = Train()
-        spawn_tile = self.map.portals[portal]
+        train.goals.append(goal.PlatformGoal(self, train, platform_goal))
+        train.goals.append(goal.ExitPortalGoal(self, train, portal_goal))
+        spawn_tile = self.map.portals[portal].sprites()[0]
         tile_traj = spawn_tile.get_trajectory()
+
+        # We pad the trajectory with "phantom" tiles to the left or right of the screen,
+        # depending on where the train is coming from
+        nb_padding_tiles = ceil(train.length / TILE_LENGTH)
         if portal in ["A", "B", "C"]:
-            for i in range(TILE_LENGTH):
-                train.trajectory.append(Vector2(-31+i, tile_traj[0].y))
+            for i in range(nb_padding_tiles * TILE_LENGTH):
+                train.trajectory.append(Vector2(-(nb_padding_tiles*TILE_LENGTH)+i, tile_traj[0].y))
             train.trajectory += tile_traj
             train.direction = "forward"
-            train.nose_position_pointer = 32
         elif portal in ["D", "E", "F", "G"]:
             train.trajectory += tile_traj
-            for i in range(TILE_LENGTH):
+            for i in range(nb_padding_tiles * TILE_LENGTH):
                 train.trajectory.append(Vector2(self.SCREEN_WIDTH + i, tile_traj[0].y))
             train.direction = "backward"
-            train.original_image = pg.transform.flip(train.original_image, True, False)
-            train.tail_position_pointer = 31
         train.spawn()
         return train
 

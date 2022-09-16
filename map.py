@@ -18,21 +18,21 @@ class Map:
 
     def __init__(self):
         map_array = [["mm+A", "mm+md", "mm", "mm", "mm", "mm+md", "mm", "mm", "mm", "mm+dm", "mm", "mm", "mm", "mm",
-                      "mm+1", "mm", "mm+dm", "mm+md", "mm", "mm", "mm", "mm", "mm+dm", "mm+D"],
-                     ["", "", "ud", "", "", "", "um", "mm+dm", "mm+mu", "mm", "mm", "mm", "mm", "mm", "mm+2", "mm+mu",
-                      "md", "", "ud", "", "", "du", "", ""],
+                      "mm+1", "mm+1", "mm+1", "mm", "mm+dm", "mm+md", "mm", "mm", "mm", "mm", "mm+dm", "mm+D"],
+                     ["", "", "ud", "", "", "", "um", "mm+dm", "mm+mu", "mm", "mm", "mm", "mm", "mm", "mm+2", "mm+2",
+                      "mm+2", "mm+mu", "md", "", "ud", "", "", "du", "", ""],
                      ["mm+B", "mm", "mm", "mm+um", "mm+md", "mm", "mm+mu", "mm", "mm", "mm", "mm", "mm", "mm", "mm",
-                      "mm+3", "mm", "mm+dm", "mm+um", "mm", "mm+um", "mm+mu", "mm", "mm", "mm+E"],
-                     ["", "", "", "", "", "um", "mm+md", "mm", "mm", "mm+dm", "mm", "mm+md", "mm", "mm", "mm+4",
-                      "mm+mu", "md", "", "", "", "", "", "", ""],
+                      "mm+3", "mm+3", "mm+3", "mm", "mm+dm", "mm+um", "mm", "mm+um", "mm+mu", "mm", "mm", "mm+E"],
+                     ["", "", "", "", "", "um", "mm+md", "mm", "mm", "mm+dm", "mm", "mm+md", "mm", "mm", "mm+4", "mm+4",
+                      "mm+4", "mm+mu", "md", "", "", "", "", "", "", ""],
                      ["mm+C", "mm", "mm", "mm", "mm", "mm", "mm", "mm+um", "mm+mu", "mm+md", "mm", "mm", "mm+um", "mm",
-                      "mm+5", "md", "", "ud", "", "", "", "", "", ""],
-                     ["", "", "", "", "", "", "", "", "", "", "um", "mm+md", "mm", "mm", "mm+6", "mm", "mm+um", "mm",
-                      "mm+um", "mm+dm", "mm+md", "mm", "mm", "mm+F"],
-                     ["", "", "", "", "", "", "", "", "", "", "", "", "um", "mm+md", "mm", "mm+7", "mm", "mm+dm",
-                      "mm+mu", "mm", "mm", "mm+um", "mm", "mm+G"],
-                     ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "um", "mm+8", "mu", "", "", "", "", "",
-                      "", ""]]
+                      "mm+5", "mm+5", "mm+5", "md", "", "ud", "", "", "", "", "", ""],
+                     ["", "", "", "", "", "", "", "", "", "", "um", "mm+md", "mm", "mm", "mm+6", "mm+6", "mm+6", "mm",
+                      "mm+um", "mm", "mm+um", "mm+dm", "mm+md", "mm", "mm", "mm+F"],
+                     ["", "", "", "", "", "", "", "", "", "", "", "", "um", "mm+md", "mm", "mm+7", "mm+7", "mm+7", "mm",
+                      "mm+dm", "mm+mu", "mm", "mm", "mm+um", "mm", "mm+G"],
+                     ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "um", "mm+8", "mm+8", "mm+8", "mu", "",
+                      "", "", "", "", "", ""]]
 
         self._parse_raw_map(map_array)
 
@@ -46,9 +46,15 @@ class Map:
         self.platforms = dict()
         for tile in self._tiles_list:
             if tile.portal is not None:
-                self.portals[tile.portal] = tile
+                try:
+                    self.portals[tile.portal].add(tile)
+                except KeyError:
+                    self.portals[tile.portal] = pg.sprite.Group(tile)
             if tile.platform is not None:
-                self.platforms[tile.platform] = tile
+                try:
+                    self.platforms[tile.platform].add(tile)
+                except KeyError:
+                    self.platforms[tile.platform] = pg.sprite.Group(tile)
 
     def update(self):
         pass
