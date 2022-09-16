@@ -15,16 +15,8 @@ from constants import TILE_LENGTH
 
 class TrackTile(pygame.sprite.Sprite):
     """
-    Represents a tile on the game map.
+    Represents a track tile on the game map.
     """
-
-    position: tuple[float]
-    main_path: str
-    alt_path: str
-    portal: str
-    platform: str
-
-    active_path: str
 
     PATH_CHAR_TO_COORDS = {"u": 0,
                            "m": (TILE_LENGTH / 2) - 1,

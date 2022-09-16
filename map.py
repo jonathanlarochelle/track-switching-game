@@ -64,7 +64,12 @@ class Map:
         # Get the tile at a certain position
         col = math.floor(pos[0]/TILE_LENGTH)
         row = math.floor(pos[1]/TILE_LENGTH)
-        return self.tiles_array[row][col]
+
+        # If (col, row) are out of bounds, return None
+        if -1 < row < len(self.tiles_array) and -1 < col < len(self.tiles_array[0]):
+            return self.tiles_array[row][col]
+        else:
+            return None
 
     def _parse_raw_map(self, raw_map):
         self.tiles_array = list()
