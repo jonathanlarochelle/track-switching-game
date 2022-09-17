@@ -12,6 +12,7 @@ from constants import TILE_LENGTH
 from map import Map
 from train import Train
 from goal import PlatformGoal, ExitPortalGoal
+from informationboard import InformationBoard
 
 
 class Game:
@@ -21,7 +22,7 @@ class Game:
 
     FPS = 30
     SCREEN_WIDTH = 26 * TILE_LENGTH
-    SCREEN_HEIGHT = 400
+    SCREEN_HEIGHT = (8 + 6) * TILE_LENGTH
 
     def __init__(self):
         pg.init()
@@ -41,10 +42,14 @@ class Game:
         # Initializing game entities
         self.map = Map()
         self.trains.append(self._create_train("B", "3", "E"))
-        # self.trains.append(self._create_train("D", "1", "A"))
+        self.trains.append(self._create_train("D", "1", "A"))
 
         # Initializing game clock
         self.clock = pg.time.Clock()
+        self.ticks = 0
+
+        # Initializing information board
+        self.info_board = InformationBoard(self.SCREEN_WIDTH, 5, self.trains)
 
         # Ready to go
         self.running = True
@@ -56,6 +61,7 @@ class Game:
             for train in self.trains:
                 train.update()
             self._check_for_despawn()
+            self.info_board.update()
 
             # User events
             self._handle_events()
@@ -65,8 +71,11 @@ class Game:
             self.map.draw(self.screen)
             for train in self.trains:
                 train.draw(self.screen)
+            print(len(self.map.tiles_array[0])*TILE_LENGTH)
+            self.info_board.draw(self.screen, (0, len(self.map.tiles_array)*TILE_LENGTH))
             pg.display.update()
 
+            self.ticks += 1
             self.clock.tick(self.FPS)
 
         # Game loop is over
