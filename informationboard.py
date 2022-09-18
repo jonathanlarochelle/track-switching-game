@@ -8,7 +8,7 @@ from pygame.math import Vector2
 
 # import your own module
 from constants import *
-from goal import PlatformGoal, ExitPortalGoal
+from goal import PlatformGoal, ExitPortalGoal, EntryPortalGoal
 
 
 class InformationBoard(pg.surface.Surface):
@@ -51,8 +51,17 @@ class InformationBoard(pg.surface.Surface):
         # Table rows (one row per train)
         rows_offset = table_header_offset + Vector2(0, 32)
         for train in self.trains:
-            self.blit(train.wagons[0].image, rows_offset + Vector2(2 * TILE_LENGTH, 0))
+            self.blit(train.wagons[0].original_image, rows_offset + Vector2(2 * TILE_LENGTH, 0))
             for goal in train.goals:
+                if isinstance(goal, EntryPortalGoal):
+                    self.blit(self.table_content_font.render(goal.target_portal, True, pg.Color("white")),
+                              rows_offset + Vector2(4 * TILE_LENGTH, 0))
+                    if goal.is_achieved:
+                        self.blit(self.table_content_font.render("o", True, pg.Color("green")),
+                                  rows_offset + Vector2(4.5 * TILE_LENGTH, 0))
+                    else:
+                        self.blit(self.table_content_font.render("x", True, pg.Color("red")),
+                                  rows_offset + Vector2(4.5 * TILE_LENGTH, 0))
                 if isinstance(goal, PlatformGoal):
                     self.blit(self.table_content_font.render(goal.target_platform, True, pg.Color("white")),
                               rows_offset + Vector2(6 * TILE_LENGTH, 0))

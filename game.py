@@ -11,7 +11,7 @@ from pygame.math import Vector2
 from constants import TILE_LENGTH
 from map import Map
 from train import Train
-from goal import PlatformGoal, ExitPortalGoal
+from goal import PlatformGoal, ExitPortalGoal, EntryPortalGoal
 from informationboard import InformationBoard
 
 
@@ -31,6 +31,8 @@ class Game:
         self.clock = None
         self.map = None
         self.trains = []
+        self.ticks = 0
+        self.info_board = None
 
     def run(self):
         """
@@ -46,7 +48,6 @@ class Game:
 
         # Initializing game clock
         self.clock = pg.time.Clock()
-        self.ticks = 0
 
         # Initializing information board
         self.info_board = InformationBoard(self.SCREEN_WIDTH, 5, self.trains)
@@ -71,7 +72,6 @@ class Game:
             self.map.draw(self.screen)
             for train in self.trains:
                 train.draw(self.screen)
-            print(len(self.map.tiles_array[0])*TILE_LENGTH)
             self.info_board.draw(self.screen, (0, len(self.map.tiles_array)*TILE_LENGTH))
             pg.display.update()
 
@@ -181,6 +181,7 @@ class Game:
         Note: These operations should be somewhere else, not sure where yet.
         """
         train = Train()
+        train.goals.append(EntryPortalGoal(self, train, portal))
         train.goals.append(PlatformGoal(self, train, platform_goal))
         train.goals.append(ExitPortalGoal(self, train, portal_goal))
         spawn_tile = self.map.portals[portal].sprites()[0]

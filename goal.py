@@ -96,3 +96,34 @@ class ExitPortalGoal(Goal):
             if self._train.state == "despawned":
                 if self._good_portal:
                     self._goal_achieved = True
+
+
+class EntryPortalGoal(Goal):
+    """
+    Goal to enter the map using a certain portal.
+    """
+
+    def __init__(self, game: game.Game, train: train.Train, target_portal: str):
+        self._game = game
+        self._train = train
+        self._goal_achieved = False
+
+        self.target_portal = target_portal
+        self._portal_collider = None
+        for tile in self._game.map.portals[self.target_portal].sprites():
+            if not self._portal_collider:
+                self._portal_collider = tile.rect
+            else:
+                self._portal_collider = self._portal_collider.union(tile.rect)
+        self._good_portal = False
+
+    def update(self):
+        """
+        Goal is achieved when
+            1) train is spawned
+            2) first portal it saw was the target portal
+        """
+        if not self.is_achieved:
+            if self._train.state == "spawned":
+                if self._portal_collider.colliderect(self._train.rect):
+                    self._goal_achieved = True
