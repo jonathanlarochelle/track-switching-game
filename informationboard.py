@@ -9,6 +9,7 @@ from pygame.math import Vector2
 # import your own module
 from constants import *
 from goal import PlatformGoal, ExitPortalGoal, EntryPortalGoal
+from instruction import SpawnInstruction
 
 
 class InformationBoard(pg.surface.Surface):
@@ -34,6 +35,8 @@ class InformationBoard(pg.surface.Surface):
         title_offset = Vector2(2, 2)
         self.blit(self.title_font.render("Upcoming trains", True, pg.Color("white")),
                   title_offset)
+        self.blit(self.table_header_font.render(str(int(pg.time.get_ticks()/1000)), True, pg.Color("white")),
+                  title_offset + Vector2(12*TILE_LENGTH, 0))
 
         # Table header
         table_header_offset = title_offset + Vector2(0, 32)
@@ -52,6 +55,11 @@ class InformationBoard(pg.surface.Surface):
         rows_offset = table_header_offset + Vector2(0, 32)
         for train in self.trains:
             self.blit(train.wagons[0].original_image, rows_offset + Vector2(2 * TILE_LENGTH, 0))
+            for instr in train.instructions:
+                if isinstance(instr, SpawnInstruction):
+                    self.blit(self.table_content_font.render(str(int(instr.spawn_time/1000)), True, pg.Color("white")),
+                              rows_offset)
+
             for goal in train.goals:
                 if isinstance(goal, EntryPortalGoal):
                     self.blit(self.table_content_font.render(goal.target_portal, True, pg.Color("white")),

@@ -19,8 +19,10 @@ class Goal(abc.ABC):
     Once achieved, a goal cannot be "unachieved".
     """
 
+    _goal_achieved = False
+
     @abc.abstractmethod
-    def __init__(self, game: game.Game, train: train.Train):
+    def __init__(self):
         pass
 
     @abc.abstractmethod
@@ -43,7 +45,6 @@ class PlatformGoal(Goal):
     def __init__(self, game: game.Game, train: train.Train, target_platform: str):
         self._game = game
         self._train = train
-        self._goal_achieved = False
 
         self.target_platform = target_platform
         self._platform_collider = None
@@ -73,7 +74,6 @@ class ExitPortalGoal(Goal):
     def __init__(self, game: game.Game, train: train.Train, target_portal: str):
         self._game = game
         self._train = train
-        self._goal_achieved = False
 
         self.target_portal = target_portal
         self._portal_collider = None

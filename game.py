@@ -13,6 +13,7 @@ from map import Map
 from train import Train
 from goal import PlatformGoal, ExitPortalGoal, EntryPortalGoal
 from informationboard import InformationBoard
+from instruction import SpawnInstruction
 
 
 class Game:
@@ -184,23 +185,7 @@ class Game:
         train.goals.append(EntryPortalGoal(self, train, portal))
         train.goals.append(PlatformGoal(self, train, platform_goal))
         train.goals.append(ExitPortalGoal(self, train, portal_goal))
-        spawn_tile = self.map.portals[portal].sprites()[0]
-        tile_traj = spawn_tile.get_trajectory()
-
-        # We pad the trajectory with "phantom" tiles to the left or right of the screen,
-        # depending on where the train is coming from
-        nb_padding_tiles = math.ceil(train.length / TILE_LENGTH)
-        if portal in ["A", "B", "C"]:
-            for i in range(nb_padding_tiles * TILE_LENGTH):
-                train.trajectory.append(Vector2(-(nb_padding_tiles*TILE_LENGTH)+i, tile_traj[0].y))
-            train.trajectory += tile_traj
-            train.direction = "forward"
-        elif portal in ["D", "E", "F", "G"]:
-            train.trajectory += tile_traj
-            for i in range(nb_padding_tiles * TILE_LENGTH):
-                train.trajectory.append(Vector2(self.SCREEN_WIDTH + i, tile_traj[0].y))
-            train.direction = "backward"
-        train.spawn()
+        train.instructions.append(SpawnInstruction(train, self.map, portal, 2000))
         return train
 
     def quit(self):

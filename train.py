@@ -24,6 +24,7 @@ class Train:
         self.wagons.append(WagonSprite("assets/trains/ice_loc.png", True))
 
         self.goals = []
+        self.instructions = []
         self.trajectory = list()
         self.rightmost_position_pointer = None  # Initialized when calling spawn()
 
@@ -37,6 +38,14 @@ class Train:
         """
         Update position of the train
         """
+        # Check for instructions
+        for instr in self.instructions:
+            instr.check_conditions()
+
+        # Check for goals
+        for goal in self.goals:
+            goal.update()
+
         if self.state == "spawned":
             # Update position
             self.rightmost_position_pointer += self.trajectory_pointer_increment
@@ -55,9 +64,6 @@ class Train:
                     position_axle_2 = self.trajectory[axle_2_pointer]
                     wagon.update(position_axle_1, position_axle_2)
                     current_offset -= wagon.length
-
-            # Check for goals
-            self._update_goals()
 
     def draw(self, screen: pg.surface.Surface):
         """
@@ -84,7 +90,6 @@ class Train:
         """
         Spawn train.
         """
-        self._init_pointer()
         self.state = "spawned"
         self.start(self.direction)
 
@@ -94,24 +99,6 @@ class Train:
         """
         self.state = "despawned"
         self.stop()
-        self._update_goals()
-
-    def _init_pointer(self):
-        """
-        Initialize the trajectory pointer.
-        TODO: Do everything with just one pointer. Nose of the train should be pointed to direction of movement, always.
-        """
-        if self.direction == "forward":
-            self.rightmost_position_pointer = len(self.trajectory) - 1
-        elif self.direction == "backward":
-            self.leftmost_position_pointer = 0
-
-    def _update_goals(self):
-        """
-        Check the status of goals.
-        """
-        for goal in self.goals:
-            goal.update()
 
     @property
     def leftmost_position_pointer(self):
