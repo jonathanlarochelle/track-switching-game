@@ -30,6 +30,8 @@ class Train:
 
         self.moving = False
         self.direction = None
+        self._waiting = False
+        self._wait_frames_remaining = 0
 
         # state can be "waiting for spawn", "spawned", "despawned"
         self.state = "waiting for spawn"
@@ -46,7 +48,7 @@ class Train:
         for goal in self.goals:
             goal.update()
 
-        if self.state == "spawned":
+        if self.state == "spawned" and not self.waiting:
             # Update position
             self.rightmost_position_pointer += self.trajectory_pointer_increment
             if self.rightmost_position_pointer >= len(self.trajectory) or self.leftmost_position_pointer < 0:
@@ -65,6 +67,13 @@ class Train:
                     wagon.update(position_axle_1, position_axle_2)
                     current_offset -= wagon.length
 
+        if self.waiting:
+            self._wait_frames_remaining -= 1
+            print(self._wait_frames_remaining)
+            if self._wait_frames_remaining == 0:
+                self._waiting = False
+                self.start(self.direction)
+
     def draw(self, screen: pg.surface.Surface):
         """
         Draw the train.
@@ -77,8 +86,9 @@ class Train:
         """
         Sets train in movement in desired direction.
         """
-        self.direction = direction
-        self.moving = True
+        if not self.waiting:
+            self.direction = direction
+            self.moving = True
 
     def stop(self):
         """
@@ -99,6 +109,14 @@ class Train:
         """
         self.state = "despawned"
         self.stop()
+
+    def wait(self, frames):
+        """
+        Wait for number of frames.
+        """
+        self._wait_frames_remaining = frames
+        self.stop()
+        self._waiting = True
 
     @property
     def leftmost_position_pointer(self):
@@ -133,3 +151,6 @@ class Train:
         else:
             return None
 
+    @property
+    def waiting(self) -> bool:
+        return self._waiting

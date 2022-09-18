@@ -9,7 +9,7 @@ from pygame.math import Vector2
 # import your own module
 from constants import *
 from goal import PlatformGoal, ExitPortalGoal, EntryPortalGoal
-from instruction import SpawnInstruction
+from instruction import SpawnInstruction, WaitAtPlatformInstruction
 
 
 class InformationBoard(pg.surface.Surface):
@@ -60,25 +60,26 @@ class InformationBoard(pg.surface.Surface):
                     self.blit(self.table_content_font.render(str(int(instr.spawn_time/1000)), True, pg.Color("white")),
                               rows_offset)
 
-            for goal in train.goals:
-                if isinstance(goal, EntryPortalGoal):
-                    self.blit(self.table_content_font.render(goal.target_portal, True, pg.Color("white")),
+                    self.blit(self.table_content_font.render(instr.spawn_portal, True, pg.Color("white")),
                               rows_offset + Vector2(4 * TILE_LENGTH, 0))
-                    if goal.is_achieved:
+                    if instr.is_completed:
                         self.blit(self.table_content_font.render("o", True, pg.Color("green")),
                                   rows_offset + Vector2(4.5 * TILE_LENGTH, 0))
                     else:
                         self.blit(self.table_content_font.render("x", True, pg.Color("red")),
                                   rows_offset + Vector2(4.5 * TILE_LENGTH, 0))
-                if isinstance(goal, PlatformGoal):
-                    self.blit(self.table_content_font.render(goal.target_platform, True, pg.Color("white")),
+
+                if isinstance(instr, WaitAtPlatformInstruction):
+                    self.blit(self.table_content_font.render(instr.target_platform, True, pg.Color("white")),
                               rows_offset + Vector2(6 * TILE_LENGTH, 0))
-                    if goal.is_achieved:
+                    if instr.is_completed:
                         self.blit(self.table_content_font.render("o", True, pg.Color("green")),
                                   rows_offset + Vector2(6.5 * TILE_LENGTH, 0))
                     else:
                         self.blit(self.table_content_font.render("x", True, pg.Color("red")),
                                   rows_offset + Vector2(6.5 * TILE_LENGTH, 0))
+
+            for goal in train.goals:
                 if isinstance(goal, ExitPortalGoal):
                     self.blit(self.table_content_font.render(goal.target_portal, True, pg.Color("white")),
                               rows_offset + Vector2(10 * TILE_LENGTH, 0))

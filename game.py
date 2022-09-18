@@ -13,7 +13,7 @@ from map import Map
 from train import Train
 from goal import PlatformGoal, ExitPortalGoal, EntryPortalGoal
 from informationboard import InformationBoard
-from instruction import SpawnInstruction
+from instruction import SpawnInstruction, DespawnInstruction, WaitAtPlatformInstruction
 
 
 class Game:
@@ -32,7 +32,6 @@ class Game:
         self.clock = None
         self.map = None
         self.trains = []
-        self.ticks = 0
         self.info_board = None
 
     def run(self):
@@ -62,7 +61,6 @@ class Game:
             self._update_trajectory()
             for train in self.trains:
                 train.update()
-            self._check_for_despawn()
             self.info_board.update()
 
             # User events
@@ -76,7 +74,6 @@ class Game:
             self.info_board.draw(self.screen, (0, len(self.map.tiles_array)*TILE_LENGTH))
             pg.display.update()
 
-            self.ticks += 1
             self.clock.tick(self.FPS)
 
         # Game loop is over
@@ -166,26 +163,16 @@ class Game:
                     # We can delete trajectory information from last tile
                     train.trajectory = train.trajectory[:-TILE_LENGTH]
 
-    def _check_for_despawn(self):
-        """
-        Note: These operations should be somewhere else, not sure where yet.
-        """
-        for train in self.trains:
-            if train.state == "spawned":
-                if not self.screen.get_rect().colliderect(train.rect):
-                    # Train is out of the game surface
-                    train.despawn()
-
     def _create_train(self, portal: str, platform_goal: str, portal_goal: str) -> Train:
         """
         Temporary factory for Train()
         Note: These operations should be somewhere else, not sure where yet.
         """
         train = Train()
-        train.goals.append(EntryPortalGoal(self, train, portal))
-        train.goals.append(PlatformGoal(self, train, platform_goal))
         train.goals.append(ExitPortalGoal(self, train, portal_goal))
-        train.instructions.append(SpawnInstruction(train, self.map, portal, 2000))
+        train.instructions.append(SpawnInstruction(train, self.map, portal, 0))
+        train.instructions.append(DespawnInstruction(train, self.screen.get_rect()))
+        train.instructions.append(WaitAtPlatformInstruction(train, self.map, platform_goal, 4 * self.FPS))
         return train
 
     def quit(self):
