@@ -7,7 +7,7 @@ import pygame as pg
 from pygame.math import Vector2
 
 # import your own module
-from trackswitchinggame.constants import TILE_LENGTH
+from trackswitchinggame.constants import *
 from trackswitchinggame.map import Map
 from trackswitchinggame.train import Train
 from trackswitchinggame.informationboard import InformationBoard
@@ -67,7 +67,7 @@ class Game:
             self.map.draw(self.screen)
             for train in self.trains:
                 train.draw(self.screen)
-            self.info_board.draw(self.screen, (0, len(self.map.tiles_array)*TILE_LENGTH))
+            self.info_board.draw(self.screen, (0, 8*TILE_LENGTH))
             pg.display.update()
 
             self.clock.tick(self.FPS)
@@ -94,7 +94,7 @@ class Game:
                             train.start(train.direction)
 
                 # Clicking on tile switches the track, if no train is currently on it.
-                clicked_tile = self.map.tile_at(mouse_position)
+                clicked_tile = self.map.tile_at(Vector2(mouse_position))
                 if clicked_tile:
                     # Not colliding with train.rect here because for some reason the rect overlaps to next tile when
                     # train is not yet on it (sometimes).

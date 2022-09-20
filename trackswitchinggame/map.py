@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 
 # import built-in module
-import math
+from typing import Union
 
 # import third-party modules
 import pygame as pg
+from pygame import Vector2
 
 # import your own module
 from trackswitchinggame.tracktile import TrackTile
-from trackswitchinggame.constants import TILE_LENGTH
+from trackswitchinggame.constants import TILE_LENGTH, Compass
 
 
 class Map:
@@ -33,14 +34,10 @@ class Map:
                       "mm+dm", "mm+mu", "mm", "mm", "mm+um", "mm", "mm+G"],
                      ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "um", "mm+8", "mm+8", "mm+8", "mu", "",
                       "", "", "", "", "", ""]]
-
-        self._parse_raw_map(map_array)
-
         self._tiles = pg.sprite.Group()
-        for row in self.tiles_array:
-            for tile in row:
-                if tile:
-                    self._tiles.add(tile)
+        self._nb_rows = 0
+        self._nb_cols = 0
+        self._parse_raw_map(map_array)
 
         self.portals = dict()
         self.platforms = dict()
@@ -60,16 +57,11 @@ class Map:
         for tile in self.tiles.sprites():
             surf.blit(tile.image, tile.rect)
 
-    def tile_at(self, pos: tuple[float]) -> TrackTile:
-        # Get the tile at a certain position
-        col = math.floor(pos[0]/TILE_LENGTH)
-        row = math.floor(pos[1]/TILE_LENGTH)
-
-        # If (col, row) are out of bounds, return None
-        if -1 < row < len(self.tiles_array) and -1 < col < len(self.tiles_array[0]):
-            return self.tiles_array[row][col]
-        else:
-            return None
+    def tile_at(self, pos: Vector2) -> Union[TrackTile, None]:
+        for tile in self.tiles.sprites():
+            if tile.rect.collidepoint(pos.x, pos.y):
+                return tile
+        return None
 
     def get_playing_field_rect(self) -> pg.Rect:
         pf_rect = None
@@ -81,7 +73,11 @@ class Map:
         return pf_rect
 
     def _parse_raw_map(self, raw_map):
-        self.tiles_array = list()
+        self._nb_rows = len(raw_map)
+        self._nb_cols = len(raw_map[0])
+        # create a TrackTile for each non-empty strings in raw_map
+        # place these TrackTile objects in a temporary array, as well as a permanent Group()
+        tiles_array = list()
         for row_id, row in enumerate(raw_map):
             tile_row = list()
             for col_id, el in enumerate(row):
@@ -108,13 +104,39 @@ class Map:
                                 tracktile_portal = param
                         else:
                             pass
-
-                    tile_row.append(TrackTile((col_id * TILE_LENGTH, row_id * TILE_LENGTH),
-                                              tracktile_mainpath, tracktile_altpath, tracktile_portal, tracktile_platform))
-            self.tiles_array.append(tile_row)
+                    new_tile = TrackTile((col_id * TILE_LENGTH, row_id * TILE_LENGTH), tracktile_mainpath,
+                                         tracktile_altpath, tracktile_portal, tracktile_platform)
+                    tile_row.append(new_tile)
+                    self._tiles.add(new_tile)
+            tiles_array.append(tile_row)
             del tile_row # Check if necessary
+
+        # Find neighbours
+        neighbours_offset_map = {Compass.NW: Vector2(-TILE_LENGTH, -TILE_LENGTH),
+                                 Compass.N: Vector2(0, -TILE_LENGTH),
+                                 Compass.NE: Vector2(+TILE_LENGTH, -TILE_LENGTH),
+                                 Compass.W: Vector2(-TILE_LENGTH, 0),
+                                 Compass.E: Vector2(+TILE_LENGTH, 0),
+                                 Compass.SW: Vector2(-TILE_LENGTH, +TILE_LENGTH),
+                                 Compass.S: Vector2(0, +TILE_LENGTH),
+                                 Compass.SE: Vector2(+TILE_LENGTH, +TILE_LENGTH)}
+        for tile in self.tiles:
+            for compass_dir, offset in neighbours_offset_map.items():
+                tile_pos = Vector2(tile.rect.x, tile.rect.y)
+                neighbour_tile = self.tile_at(tile_pos + offset)
+                if neighbour_tile:
+                    tile.set_neighbour(compass_dir, neighbour_tile)
+
 
     @property
     def tiles(self) -> pg.sprite.Group:
         return self._tiles
+
+    @property
+    def nb_rows(self) -> int:
+        return self._nb_rows
+
+    @property
+    def nb_cols(self) -> int:
+        return self._nb_cols
 

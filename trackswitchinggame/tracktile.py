@@ -7,7 +7,7 @@ import pygame as pg
 from pygame.math import Vector2
 
 # import your own module
-from trackswitchinggame.constants import TILE_LENGTH
+from trackswitchinggame.constants import TILE_LENGTH, Compass
 
 
 class TrackTile(pg.sprite.Sprite):
@@ -27,6 +27,8 @@ class TrackTile(pg.sprite.Sprite):
         self.alt_path = alternative_path
         self.portal = portal
         self.platform = platform
+
+        self._neighbours = {key: None for key in Compass}
 
         self.active_path = "main"
 
@@ -120,3 +122,9 @@ class TrackTile(pg.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = self.position[0]
         self.rect.y = self.position[1]
+
+    def set_neighbour(self, compass_direction: str, tile: "TrackTile"):
+        self._neighbours[compass_direction] = tile
+
+    def get_neighbour(self, compass_direction: str):
+        return self._neighbours[compass_direction]
