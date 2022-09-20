@@ -55,7 +55,6 @@ class Game:
         # Game loop
         while self.running:
             # Update
-            self._update_trajectory()
             for train in self.trains:
                 train.update()
             self.info_board.update()
@@ -108,72 +107,20 @@ class Game:
                     else:
                         clicked_tile.switch_track()
 
-    def _update_trajectory(self):
-        """
-        Monitors all trains's trajectory and associated pointers to 1) add trajectories from next tile and
-        2) delete trajectory from previous tile.
-        Note: These operations should be somewhere else, not sure where yet.
-        """
-        for train in self.trains:
-            if train.moving and train.direction == "forward":
-                if (train.rightmost_position_pointer + train.trajectory_pointer_increment) >= len(train.trajectory):
-                    # We need to fetch trajectory information from next tile
-                    train_vector = train.trajectory[-1] - train.trajectory[-2]
-                    next_tile_position = train.trajectory[-1] + train_vector
-                    next_tile = self.map.tile_at(next_tile_position)
-                    if next_tile:
-                        new_trajectory = next_tile.get_trajectory()
-                        # Check if our entry point is valid for the next tile
-                        if next_tile_position in new_trajectory:
-                            train.trajectory += new_trajectory
-                    else:
-                        # No next tile, which means we are headed out of playing field.
-                        # Padding with a straight trajectory for now.
-                        last_point = train.trajectory[-1]
-                        train.trajectory += [last_point + Vector2(i, 0) for i in range(TILE_LENGTH)]
-
-                if (train.leftmost_position_pointer + train.trajectory_pointer_increment) >= TILE_LENGTH:
-                    # We can delete trajectory information from last tile
-                    train.trajectory = train.trajectory[TILE_LENGTH:]
-                    train.rightmost_position_pointer -= TILE_LENGTH
-
-            elif train.moving and train.direction == "backward":
-                if (train.leftmost_position_pointer + train.trajectory_pointer_increment) < 0:
-                    # We need to fetch trajectory information from previous tile
-                    train_vector = train.trajectory[0] - train.trajectory[1]
-                    next_tile_position = train.trajectory[0] + train_vector
-                    next_tile = self.map.tile_at(next_tile_position)
-                    if next_tile:
-                        new_trajectory = self.map.tile_at(next_tile_position).get_trajectory()
-                        # Check if our entry point is valid for the next tile
-                        if next_tile_position in new_trajectory:
-                            train.trajectory = new_trajectory + train.trajectory
-                            train.rightmost_position_pointer += TILE_LENGTH
-                    else:
-                        # No next tile, which means we are headed out of playing field.
-                        # Padding with a straight trajectory for now.
-                        last_point = train.trajectory[0]
-                        train.trajectory = [last_point + Vector2(-TILE_LENGTH+i, 0) for i in range(TILE_LENGTH)] + train.trajectory
-                        train.rightmost_position_pointer += TILE_LENGTH
-
-                if (train.rightmost_position_pointer + train.trajectory_pointer_increment) < (len(train.trajectory) - TILE_LENGTH):
-                    # We can delete trajectory information from last tile
-                    train.trajectory = train.trajectory[:-TILE_LENGTH]
-
     def _init_trains(self):
         """
         Temporary factory to create all trains in the level.
         """
 
         # Train 1: B > 3 > E
-        train = Train("1")
+        train = Train("1", self.map)
         train.add_instruction(instruction.create_spawn_instruction(train, self.map.portals["B"].sprites()[0], 2000))
         train.add_instruction(instruction.create_platform_instruction(train, self.map.platforms["3"], 3000))
         train.add_instruction(instruction.create_despawn_instruction(train, self.map.tiles))
         self.trains.append(train)
 
         # Train 2: D > 1 > A
-        train = Train("2")
+        train = Train("2", self.map)
         train.add_instruction(instruction.create_spawn_instruction(train, self.map.portals["D"].sprites()[0], 10000))
         train.add_instruction(instruction.create_platform_instruction(train, self.map.platforms["1"], 3000))
         train.add_instruction(instruction.create_despawn_instruction(train, self.map.tiles))

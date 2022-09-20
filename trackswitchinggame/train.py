@@ -4,10 +4,14 @@
 
 # import third-party modules
 import pygame as pg
+from pygame import Vector2
 
 # import your own module
 from trackswitchinggame.wagonsprite import WagonSprite
 import trackswitchinggame.instruction as instruction
+import trackswitchinggame.map as map
+from trackswitchinggame.constants import *
+
 
 
 class Train:
@@ -16,12 +20,14 @@ class Train:
     The train's movement follow points stored in trajectory.
     """
 
-    def __init__(self, id):
+    def __init__(self, id, map: map.Map):
         # Set-up wagons
         self._wagons = pg.sprite.Group()
         self._wagons.add(WagonSprite("assets/trains/ice_loc.png", id))
         self._wagons.add(WagonSprite("assets/trains/ice_wagon.png", id))
         self._wagons.add(WagonSprite("assets/trains/ice_loc.png", id, True))
+
+        self._map = map
 
         self._instructions = []
         self.trajectory = list()
@@ -51,6 +57,7 @@ class Train:
 
         if self.moving:
             # Update position
+            self._update_trajectory()
             self.rightmost_position_pointer += self.trajectory_pointer_increment
             if self.rightmost_position_pointer >= len(self.trajectory) or self.leftmost_position_pointer < 0:
                 # No trajectory defined, we do not move.
@@ -118,6 +125,54 @@ class Train:
         self._wait_end = pg.time.get_ticks() + milliseconds
         self.stop()
         self._waiting = True
+
+    def _update_trajectory(self):
+        if self.direction == "forward":
+            if (self.rightmost_position_pointer + self.trajectory_pointer_increment) >= len(self.trajectory):
+                # We need to fetch trajectory information from next tile
+                train_vector = self.trajectory[-1] - self.trajectory[-2]
+                next_tile_position = self.trajectory[-1] + train_vector
+                next_tile = self._map.tile_at(next_tile_position)
+                if next_tile:
+                    new_trajectory = next_tile.get_trajectory()
+                    # Check if our entry point is valid for the next tile
+                    if next_tile_position in new_trajectory:
+                        self.trajectory += new_trajectory
+                else:
+                    # No next tile, which means we are headed out of playing field.
+                    # Padding with a straight trajectory for now.
+                    last_point = self.trajectory[-1]
+                    self.trajectory += [last_point + Vector2(i, 0) for i in range(TILE_LENGTH)]
+
+            if (self.leftmost_position_pointer + self.trajectory_pointer_increment) >= TILE_LENGTH:
+                # We can delete trajectory information from last tile
+                self.trajectory = self.trajectory[TILE_LENGTH:]
+                self.rightmost_position_pointer -= TILE_LENGTH
+
+        elif self.direction == "backward":
+            if (self.leftmost_position_pointer + self.trajectory_pointer_increment) < 0:
+                # We need to fetch trajectory information from previous tile
+                train_vector = self.trajectory[0] - self.trajectory[1]
+                next_tile_position = self.trajectory[0] + train_vector
+                next_tile = self._map.tile_at(next_tile_position)
+                if next_tile:
+                    new_trajectory = next_tile.get_trajectory()
+                    # Check if our entry point is valid for the next tile
+                    if next_tile_position in new_trajectory:
+                        self.trajectory = new_trajectory + self.trajectory
+                        self.rightmost_position_pointer += TILE_LENGTH
+                else:
+                    # No next tile, which means we are headed out of playing field.
+                    # Padding with a straight trajectory for now.
+                    last_point = self.trajectory[0]
+                    self.trajectory = [last_point + Vector2(-TILE_LENGTH + i, 0) for i in
+                                        range(TILE_LENGTH)] + self.trajectory
+                    self.rightmost_position_pointer += TILE_LENGTH
+
+            if (self.rightmost_position_pointer + self.trajectory_pointer_increment) < (
+                    len(self.trajectory) - TILE_LENGTH):
+                # We can delete trajectory information from last tile
+                self.trajectory = self.trajectory[:-TILE_LENGTH]
 
     @property
     def leftmost_position_pointer(self):
