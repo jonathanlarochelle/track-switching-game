@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # import built-in module
+import math
 
 # import third-party modules
 import pygame as pg
@@ -11,7 +12,6 @@ from trackswitchinggame.wagonsprite import WagonSprite
 import trackswitchinggame.instruction as instruction
 import trackswitchinggame.map as map
 from trackswitchinggame.constants import *
-
 
 
 class Train:
@@ -104,12 +104,33 @@ class Train:
         """
         self._moving = False
 
-    def spawn(self):
+    def spawn(self, portal: str):
         """
         Spawn train.
         """
+        # Prepare trajectory
+        portal_tile = self._map.portals[portal].sprites()[0]
+        spawn_tile_traj = portal_tile.get_trajectory()
+        nb_padding_tiles = math.ceil(self.length / TILE_LENGTH)
+        if (portal_tile.get_neighbour(Compass.NW) is None) and \
+                (portal_tile.get_neighbour(Compass.W) is None) and \
+                (portal_tile.get_neighbour(Compass.SW) is None):
+            for i in range(nb_padding_tiles * TILE_LENGTH):
+                self.trajectory.append(Vector2(-(nb_padding_tiles * TILE_LENGTH) + i, spawn_tile_traj[0].y))
+            self.trajectory += spawn_tile_traj
+            direction = "forward"
+            self.rightmost_position_pointer = len(self.trajectory) - 31
+        elif (portal_tile.get_neighbour(Compass.NE) is None) and \
+                (portal_tile.get_neighbour(Compass.E) is None) and \
+                (portal_tile.get_neighbour(Compass.SE) is None):
+            self.trajectory += spawn_tile_traj
+            for i in range(nb_padding_tiles * TILE_LENGTH):
+                self.trajectory.append(Vector2(spawn_tile_traj[-1].x + i, spawn_tile_traj[0].y))
+            direction = "backward"
+            self.leftmost_position_pointer = 30
+
         self._spawned = True
-        self.start(self.direction)
+        self.start(direction)
 
     def despawn(self):
         """
@@ -222,3 +243,7 @@ class Train:
     @property
     def wagons(self) -> pg.sprite.Group:
         return self._wagons
+
+    @property
+    def instructions(self) -> list[instruction.Instruction]:
+        return self._instructions

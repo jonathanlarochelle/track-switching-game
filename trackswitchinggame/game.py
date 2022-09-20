@@ -100,10 +100,11 @@ class Game:
                     # train is not yet on it (sometimes).
                     # TODO: Correct this.
                     for train in self.trains:
-                        point_1 = train.trajectory[train.rightmost_position_pointer]
-                        point_2 = train.trajectory[train.leftmost_position_pointer]
-                        if clicked_tile.rect.collidepoint(point_1) or clicked_tile.rect.collidepoint(point_2):
-                            break
+                        if train.spawned:
+                            point_1 = train.trajectory[train.rightmost_position_pointer]
+                            point_2 = train.trajectory[train.leftmost_position_pointer]
+                            if clicked_tile.rect.collidepoint(point_1) or clicked_tile.rect.collidepoint(point_2):
+                                break
                     else:
                         clicked_tile.switch_track()
 
@@ -111,20 +112,22 @@ class Game:
         """
         Temporary factory to create all trains in the level.
         """
+        self.trains.append(self._train_factory("1", 0, "B", "3", "E"))
+        self.trains.append(self._train_factory("2", 10*1000, "D", "2", "A"))
+        self.trains.append(self._train_factory("3", 20*1000, "D", "1", "A"))
+        self.trains.append(self._train_factory("4", 30*1000, "F", "6", "C"))
+        self.trains.append(self._train_factory("5", 40*1000, "C", "7", "F"))
+        self.trains.append(self._train_factory("6", 50*1000, "D", "5", "A"))
+        self.trains.append(self._train_factory("7", 60*1000, "C", "8", "F"))
+        self.trains.append(self._train_factory("8", 70 * 1000, "B", "4", "E"))
+        self.trains.append(self._train_factory("9", 90 * 1000, "D", "1", "A"))
 
-        # Train 1: B > 3 > E
-        train = Train("1", self.map)
-        train.add_instruction(instruction.create_spawn_instruction(train, self.map.portals["B"].sprites()[0], 2000))
-        train.add_instruction(instruction.create_platform_instruction(train, self.map.platforms["3"], 3000))
-        train.add_instruction(instruction.create_despawn_instruction(train, self.map.tiles))
-        self.trains.append(train)
-
-        # Train 2: D > 1 > A
-        train = Train("2", self.map)
-        train.add_instruction(instruction.create_spawn_instruction(train, self.map.portals["D"].sprites()[0], 10000))
-        train.add_instruction(instruction.create_platform_instruction(train, self.map.platforms["1"], 3000))
-        train.add_instruction(instruction.create_despawn_instruction(train, self.map.tiles))
-        self.trains.append(train)
+    def _train_factory(self, id, entry_time, entry_portal, platform, exit_portal):
+        train = Train(id, self.map)
+        train.add_instruction(instruction.SpawnInstruction(train, entry_time, entry_portal))
+        train.add_instruction(instruction.PlatformStopInstruction(train, platform, 3000))
+        train.add_instruction(instruction.DespawnInstruction(train, exit_portal))
+        return train
 
     def quit(self):
         """

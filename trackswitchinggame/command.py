@@ -31,32 +31,17 @@ class Command(abc.ABC):
         pass
 
 
-class SpawnTrainAtPortalCommand(Command):
+class SpawnTrainCommand(Command):
     """
     Command: spawn the train at portal.
     """
 
-    def __init__(self, train: train.Train, portal_tile: tracktile.TrackTile):
+    def __init__(self, train: train.Train, portal: str):
         self._train = train
-
-        # Prepare trajectory
-        spawn_tile_traj = portal_tile.get_trajectory()
-        nb_padding_tiles = math.ceil(train.length / TILE_LENGTH)
-        if portal_tile.portal in ["A", "B", "C"]:
-            for i in range(nb_padding_tiles * TILE_LENGTH):
-                self._train.trajectory.append(Vector2(-(nb_padding_tiles * TILE_LENGTH) + i, spawn_tile_traj[0].y))
-            self._train.trajectory += spawn_tile_traj
-            self._train.direction = "forward"
-            self._train.rightmost_position_pointer = len(self._train.trajectory) - 31
-        elif portal_tile.portal in ["D", "E", "F", "G"]:
-            self._train.trajectory += spawn_tile_traj
-            for i in range(nb_padding_tiles * TILE_LENGTH):
-                self._train.trajectory.append(Vector2(spawn_tile_traj[-1].x + i, spawn_tile_traj[0].y))
-            self._train.direction = "backward"
-            self._train.leftmost_position_pointer = 30
+        self._portal = portal
 
     def execute(self):
-        self._train.spawn()
+        self._train.spawn(self._portal)
 
 
 class WaitCommand(Command):

@@ -55,62 +55,81 @@ class Instruction:
         return self._fulfillment_time
 
 
-def create_spawn_instruction(train: train.Train, spawn_tile: tracktile.TrackTile, spawn_time: int = 0) -> Instruction:
+class SpawnInstruction(Instruction):
     """
-    Helper function to create a spawn instruction
-    :param train:
-    :param spawn_tile:
-    :param spawn_time: milliseconds since pygame.init()
+    Instruction used to spawn the train.
     """
-    conditions = []
-    commands = []
 
-    # Conditions
-    conditions.append(condition.ObjectAttributeCondition(train, "spawned", False))
-    conditions.append(condition.TimeSinceBeginningCondition(spawn_time))
+    def __init__(self, train: train.Train, spawn_time: int, spawn_portal: str):
+        self._spawn_time = spawn_time
+        self._spawn_portal = spawn_portal
 
-    # Commands
-    commands.append(command.SpawnTrainAtPortalCommand(train, spawn_tile))
+        conditions = []
+        commands = []
 
-    return Instruction(condition.AndCondition(conditions), commands)
+        # Conditions
+        conditions.append(condition.ObjectAttributeCondition(train, "spawned", False))
+        conditions.append(condition.TimeSinceBeginningCondition(spawn_time))
+
+        # Commands
+        commands.append(command.SpawnTrainCommand(train, spawn_portal))
+
+        super().__init__(condition.AndCondition(conditions), commands)
+
+    @property
+    def spawn_time(self) -> int:
+        return self._spawn_time
+
+    @property
+    def spawn_portal(self) -> str:
+        return self._spawn_portal
 
 
-def create_platform_instruction(train: train.Train, platform_tiles: pg.sprite.Group, wait_delay: int) -> Instruction:
+class DespawnInstruction(Instruction):
     """
-    Helper function to create a platform Instruction.
-    Train departs after wait_delay, if departure_time has been reached.
-    :param train:
-    :param platform_tiles:
-    :param wait_delay: delay to wait at the platform (in milliseconds)
+    Instruction used to despawn the train.
     """
-    conditions = []
-    commands = []
 
-    # Conditions
-    conditions.append(condition.ObjectAttributeCondition(train, "spawned", True))
-    conditions.append(condition.GroupContainedInGroupCondition(train.wagons, platform_tiles))
+    def __init__(self, train: train.Train, despawn_portal: str):
+        self._despawn_portal = despawn_portal
 
-    # Commands
-    commands.append(command.WaitCommand(train, wait_delay))
+        conditions = []
+        commands = []
 
-    return Instruction(condition.AndCondition(conditions), commands)
+        # Conditions
+        conditions.append(condition.ObjectAttributeCondition(train, "spawned", True))
+        conditions.append(condition.NotCondition(condition.GroupsCollideCondition(train.wagons, train._map.tiles)))
+
+        # Commands
+        commands.append(command.DespawnCommand(train))
+
+        super().__init__(condition.AndCondition(conditions), commands)
+
+    @property
+    def despawn_portal(self) -> str:
+        return self._despawn_portal
 
 
-def create_despawn_instruction(train: train.Train, playing_field: pg.sprite.Group) -> Instruction:
+class PlatformStopInstruction(Instruction):
     """
-    General despawn instruction.
-    :param train:
-    :param playing_field:
-    :return:
+    Instruction used to stop at a platform.
     """
-    conditions = []
-    commands = []
 
-    # Conditions
-    conditions.append(condition.ObjectAttributeCondition(train, "spawned", True))
-    conditions.append(condition.NotCondition(condition.GroupsCollideCondition(train.wagons, playing_field)))
+    def __init__(self, train: train.Train, platform: str, wait_duration: int):
+        self._platform = platform
 
-    # Commands
-    commands.append(command.DespawnCommand(train))
+        conditions = []
+        commands = []
 
-    return Instruction(condition.AndCondition(conditions), commands)
+        # Conditions
+        conditions.append(condition.ObjectAttributeCondition(train, "spawned", True))
+        conditions.append(condition.GroupContainedInGroupCondition(train.wagons, train._map.platforms[platform]))
+
+        # Commands
+        commands.append(command.WaitCommand(train, wait_duration))
+
+        super().__init__(condition.AndCondition(conditions), commands)
+
+    @property
+    def platform(self) -> str:
+        return self._platform
