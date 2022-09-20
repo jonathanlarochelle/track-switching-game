@@ -7,7 +7,7 @@ import pygame as pg
 from pygame.math import Vector2
 
 # import your own module
-from constants import TILE_LENGTH
+from trackswitchinggame.constants import TILE_LENGTH
 
 
 class TrackTile(pg.sprite.Sprite):

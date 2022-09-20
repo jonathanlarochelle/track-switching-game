@@ -4,10 +4,10 @@
 
 # import third-party modules
 import pygame as pg
-from pygame.math import Vector2
 
 # import your own module
-from wagonsprite import WagonSprite
+from trackswitchinggame.wagonsprite import WagonSprite
+import trackswitchinggame.instruction as instruction
 
 
 class Train:
@@ -16,39 +16,40 @@ class Train:
     The train's movement follow points stored in trajectory.
     """
 
-    def __init__(self):
+    def __init__(self, id):
         # Set-up wagons
-        self.wagons = []
-        self.wagons.append(WagonSprite("assets/trains/ice_loc.png"))
-        self.wagons.append(WagonSprite("assets/trains/ice_wagon.png"))
-        self.wagons.append(WagonSprite("assets/trains/ice_loc.png", True))
+        self._wagons = pg.sprite.Group()
+        self._wagons.add(WagonSprite("assets/trains/ice_loc.png", id))
+        self._wagons.add(WagonSprite("assets/trains/ice_wagon.png", id))
+        self._wagons.add(WagonSprite("assets/trains/ice_loc.png", id, True))
 
-        self.goals = []
-        self.instructions = []
+        self._instructions = []
         self.trajectory = list()
         self.rightmost_position_pointer = None  # Initialized when calling spawn()
 
-        self.moving = False
-        self.direction = None
+        # State variables
+        self._spawned = False
+        self._moving = False
         self._waiting = False
-        self._wait_frames_remaining = 0
+        self.direction = None
+        self._wait_end = 0
 
         # state can be "waiting for spawn", "spawned", "despawned"
-        self.state = "waiting for spawn"
+        self._state = "waiting for spawn"
 
     def update(self):
         """
         Update position of the train
         """
-        # Check for instructions
-        for instr in self.instructions:
-            instr.check_conditions()
+        # Instruction
+        for instr in self._instructions:
+            if not instr.fulfilled:
+                instr.update()
+                # If instruction was just fulfilled, we prevent other instructions from being checked until next frame.
+                if instr.fulfilled:
+                    break
 
-        # Check for goals
-        for goal in self.goals:
-            goal.update()
-
-        if self.state == "spawned" and not self.waiting:
+        if self.moving:
             # Update position
             self.rightmost_position_pointer += self.trajectory_pointer_increment
             if self.rightmost_position_pointer >= len(self.trajectory) or self.leftmost_position_pointer < 0:
@@ -57,7 +58,7 @@ class Train:
             else:
                 current_offset = self.rightmost_position_pointer
 
-                for wagon in self.wagons:
+                for wagon in self._wagons.sprites():
                     # Should the position of the axles be handled individually by each wagon?
                     # Do we want wagons to have a variable axle offset??
                     axle_1_pointer = current_offset - 5
@@ -68,19 +69,19 @@ class Train:
                     current_offset -= wagon.length
 
         if self.waiting:
-            self._wait_frames_remaining -= 1
-            print(self._wait_frames_remaining)
-            if self._wait_frames_remaining == 0:
+            if pg.time.get_ticks() > self._wait_end:
                 self._waiting = False
                 self.start(self.direction)
+
+    def add_instruction(self, instruction: instruction.Instruction):
+        self._instructions.append(instruction)
 
     def draw(self, screen: pg.surface.Surface):
         """
         Draw the train.
         """
-        if self.state == "spawned":
-            for wagon in self.wagons:
-                wagon.draw(screen)
+        if self.spawned:
+            self._wagons.draw(screen)
 
     def start(self, direction):
         """
@@ -88,33 +89,33 @@ class Train:
         """
         if not self.waiting:
             self.direction = direction
-            self.moving = True
+            self._moving = True
 
     def stop(self):
         """
         Train stops.
         """
-        self.moving = False
+        self._moving = False
 
     def spawn(self):
         """
         Spawn train.
         """
-        self.state = "spawned"
+        self._spawned = True
         self.start(self.direction)
 
     def despawn(self):
         """
         Despawn train.
         """
-        self.state = "despawned"
+        self._spawned = False
         self.stop()
 
-    def wait(self, frames):
+    def wait(self, milliseconds):
         """
-        Wait for number of frames.
+        Wait for number of milliseconds.
         """
-        self._wait_frames_remaining = frames
+        self._wait_end = pg.time.get_ticks() + milliseconds
         self.stop()
         self._waiting = True
 
@@ -139,18 +140,30 @@ class Train:
     @property
     def length(self):
         length = 0
-        for wagon in self.wagons:
+        for wagon in self._wagons:
             length += wagon.length
         return length
 
     @property
     def rect(self):
-        if self.wagons:
-            rect = self.wagons[0].rect
-            return rect.unionall([wagon.rect for wagon in self.wagons])
+        if self._wagons:
+            rect = self._wagons.sprites()[0].rect
+            return rect.unionall([wagon.rect for wagon in self._wagons.sprites()])
         else:
             return None
 
     @property
+    def spawned(self) -> bool:
+        return self._spawned
+
+    @property
+    def moving(self) -> bool:
+        return self._moving
+
+    @property
     def waiting(self) -> bool:
         return self._waiting
+
+    @property
+    def wagons(self) -> pg.sprite.Group:
+        return self._wagons

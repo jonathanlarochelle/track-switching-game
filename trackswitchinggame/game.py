@@ -1,19 +1,17 @@
 # -*- coding: utf-8 -*-
 
 # import built-in module
-import math
 
 # import third-party modules
 import pygame as pg
 from pygame.math import Vector2
 
 # import your own module
-from constants import TILE_LENGTH
-from map import Map
-from train import Train
-from goal import PlatformGoal, ExitPortalGoal, EntryPortalGoal
-from informationboard import InformationBoard
-from instruction import SpawnInstruction, DespawnInstruction, WaitAtPlatformInstruction
+from trackswitchinggame.constants import TILE_LENGTH
+from trackswitchinggame.map import Map
+from trackswitchinggame.train import Train
+from trackswitchinggame.informationboard import InformationBoard
+import trackswitchinggame.instruction as instruction
 
 
 class Game:
@@ -43,8 +41,7 @@ class Game:
 
         # Initializing game entities
         self.map = Map()
-        self.trains.append(self._create_train("B", "3", "E"))
-        self.trains.append(self._create_train("D", "1", "A"))
+        self._init_trains()
 
         # Initializing game clock
         self.clock = pg.time.Clock()
@@ -163,17 +160,24 @@ class Game:
                     # We can delete trajectory information from last tile
                     train.trajectory = train.trajectory[:-TILE_LENGTH]
 
-    def _create_train(self, portal: str, platform_goal: str, portal_goal: str) -> Train:
+    def _init_trains(self):
         """
-        Temporary factory for Train()
-        Note: These operations should be somewhere else, not sure where yet.
+        Temporary factory to create all trains in the level.
         """
-        train = Train()
-        train.goals.append(ExitPortalGoal(self, train, portal_goal))
-        train.instructions.append(SpawnInstruction(train, self.map, portal, 0))
-        train.instructions.append(DespawnInstruction(train, self.screen.get_rect()))
-        train.instructions.append(WaitAtPlatformInstruction(train, self.map, platform_goal, 4 * self.FPS))
-        return train
+
+        # Train 1: B > 3 > E
+        train = Train("1")
+        train.add_instruction(instruction.create_spawn_instruction(train, self.map.portals["B"].sprites()[0], 2000))
+        train.add_instruction(instruction.create_platform_instruction(train, self.map.platforms["3"], 3000))
+        train.add_instruction(instruction.create_despawn_instruction(train, self.map.tiles))
+        self.trains.append(train)
+
+        # Train 2: D > 1 > A
+        train = Train("2")
+        train.add_instruction(instruction.create_spawn_instruction(train, self.map.portals["D"].sprites()[0], 10000))
+        train.add_instruction(instruction.create_platform_instruction(train, self.map.platforms["1"], 3000))
+        train.add_instruction(instruction.create_despawn_instruction(train, self.map.tiles))
+        self.trains.append(train)
 
     def quit(self):
         """

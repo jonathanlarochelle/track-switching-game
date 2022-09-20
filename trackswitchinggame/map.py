@@ -7,8 +7,8 @@ import math
 import pygame as pg
 
 # import your own module
-from tracktile import TrackTile
-from constants import TILE_LENGTH
+from trackswitchinggame.tracktile import TrackTile
+from trackswitchinggame.constants import TILE_LENGTH
 
 
 class Map:
@@ -36,15 +36,15 @@ class Map:
 
         self._parse_raw_map(map_array)
 
-        self._tiles_list = list()
+        self._tiles = pg.sprite.Group()
         for row in self.tiles_array:
             for tile in row:
                 if tile:
-                    self._tiles_list.append(tile)
+                    self._tiles.add(tile)
 
         self.portals = dict()
         self.platforms = dict()
-        for tile in self._tiles_list:
+        for tile in self.tiles.sprites():
             if tile.portal is not None:
                 try:
                     self.portals[tile.portal].add(tile)
@@ -57,7 +57,7 @@ class Map:
                     self.platforms[tile.platform] = pg.sprite.Group(tile)
 
     def draw(self, surf: pg.surface.Surface):
-        for tile in self._tiles_list:
+        for tile in self.tiles.sprites():
             surf.blit(tile.image, tile.rect)
 
     def tile_at(self, pos: tuple[float]) -> TrackTile:
@@ -70,6 +70,15 @@ class Map:
             return self.tiles_array[row][col]
         else:
             return None
+
+    def get_playing_field_rect(self) -> pg.Rect:
+        pf_rect = None
+        for tile in self.tiles.sprites():
+            if not pf_rect:
+                pf_rect = tile.rect
+            else:
+                pf_rect = pf_rect.union(tile.rect)
+        return pf_rect
 
     def _parse_raw_map(self, raw_map):
         self.tiles_array = list()
@@ -104,4 +113,8 @@ class Map:
                                               tracktile_mainpath, tracktile_altpath, tracktile_portal, tracktile_platform))
             self.tiles_array.append(tile_row)
             del tile_row # Check if necessary
+
+    @property
+    def tiles(self) -> pg.sprite.Group:
+        return self._tiles
 
