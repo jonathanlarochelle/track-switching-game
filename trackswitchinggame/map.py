@@ -9,7 +9,7 @@ from pygame import Vector2
 
 # import your own module
 from trackswitchinggame.tracktile import TrackTile
-from trackswitchinggame.constants import TILE_LENGTH, Compass
+from trackswitchinggame.constants import *
 
 
 class Map:
@@ -19,21 +19,21 @@ class Map:
 
     def __init__(self):
         map_array = [["mm+A", "mm+md", "mm", "mm", "mm", "mm+md", "mm", "mm", "mm", "mm+dm", "mm", "mm", "mm", "mm",
-                      "mm+1", "mm+1", "mm+1", "mm", "mm+dm", "mm+md", "mm", "mm", "mm", "mm", "mm+dm", "mm+D"],
+                      "mm+1", "mm+1", "mm+1", "mm", "mm+dm", "mm+md", "mm", "mm", "mm", "mm", "mm+dm", "mm", "mm+D"],
                      ["", "", "ud", "", "", "", "um", "mm+dm", "mm+mu", "mm", "mm", "mm", "mm", "mm", "mm+2", "mm+2",
-                      "mm+2", "mm+mu", "md", "", "ud", "", "", "du", "", ""],
+                      "mm+2", "mm+mu", "md", "", "ud", "", "", "du", "", "", ""],
                      ["mm+B", "mm", "mm", "mm+um", "mm+md", "mm", "mm+mu", "mm", "mm", "mm", "mm", "mm", "mm", "mm",
-                      "mm+3", "mm+3", "mm+3", "mm", "mm+dm", "mm+um", "mm", "mm+um", "mm+mu", "mm", "mm", "mm+E"],
+                      "mm+3", "mm+3", "mm+3", "mm", "mm+dm", "mm+um", "mm", "mm+um", "mm+mu", "mm", "mm", "mm", "mm+E"],
                      ["", "", "", "", "", "um", "mm+md", "mm", "mm", "mm+dm", "mm", "mm+md", "mm", "mm", "mm+4", "mm+4",
-                      "mm+4", "mm+mu", "md", "", "", "", "", "", "", ""],
+                      "mm+4", "mm+mu", "md", "", "", "", "", "", "", "", ""],
                      ["mm+C", "mm", "mm", "mm", "mm", "mm", "mm", "mm+um", "mm+mu", "mm+md", "mm", "mm", "mm+um", "mm",
-                      "mm+5", "mm+5", "mm+5", "md", "", "ud", "", "", "", "", "", ""],
+                      "mm+5", "mm+5", "mm+5", "md", "", "ud", "", "", "", "", "", "", ""],
                      ["", "", "", "", "", "", "", "", "", "", "um", "mm+md", "mm", "mm", "mm+6", "mm+6", "mm+6", "mm",
-                      "mm+um", "mm", "mm+um", "mm+dm", "mm+md", "mm", "mm", "mm+F"],
+                      "mm+um", "mm", "mm+um", "mm+dm", "mm+md", "mm", "mm", "mm", "mm+F"],
                      ["", "", "", "", "", "", "", "", "", "", "", "", "um", "mm+md", "mm", "mm+7", "mm+7", "mm+7", "mm",
-                      "mm+dm", "mm+mu", "mm", "mm", "mm+um", "mm", "mm+G"],
+                      "mm+dm", "mm+mu", "mm", "mm", "mm+um", "mm", "mm", "mm+G"],
                      ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "um", "mm+8", "mm+8", "mm+8", "mu", "",
-                      "", "", "", "", "", ""]]
+                      "", "", "", "", "", "", ""]]
         self._tiles = pg.sprite.Group()
         self._nb_rows = 0
         self._nb_cols = 0
@@ -52,6 +52,17 @@ class Map:
                     self.platforms[tile.platform].add(tile)
                 except KeyError:
                     self.platforms[tile.platform] = pg.sprite.Group(tile)
+
+        self.input_portals = ["B", "C", "D", "F"]
+        self.output_portals = ["A", "C", "E", "G"]
+        self.platforms_connecting_portals = {"1": ["A", "B", "D", "E"],
+                                             "2": ["A", "B", "D", "E"],
+                                             "3": ["A", "B", "D", "E"],
+                                             "4": ["A", "B", "C", "D", "E", "F", "G"],
+                                             "5": ["A", "B", "C", "F", "G"],
+                                             "6": ["A", "B", "C", "F", "G"],
+                                             "7": ["A", "B", "C", "F", "G"],
+                                             "8":["A", "B", "C", "F", "G"]}
 
     def draw(self, surf: pg.surface.Surface):
         for tile in self.tiles.sprites():
@@ -112,14 +123,14 @@ class Map:
             del tile_row # Check if necessary
 
         # Find neighbours
-        neighbours_offset_map = {Compass.NW: Vector2(-TILE_LENGTH, -TILE_LENGTH),
-                                 Compass.N: Vector2(0, -TILE_LENGTH),
-                                 Compass.NE: Vector2(+TILE_LENGTH, -TILE_LENGTH),
-                                 Compass.W: Vector2(-TILE_LENGTH, 0),
-                                 Compass.E: Vector2(+TILE_LENGTH, 0),
-                                 Compass.SW: Vector2(-TILE_LENGTH, +TILE_LENGTH),
-                                 Compass.S: Vector2(0, +TILE_LENGTH),
-                                 Compass.SE: Vector2(+TILE_LENGTH, +TILE_LENGTH)}
+        neighbours_offset_map = {NW: Vector2(-TILE_LENGTH, -TILE_LENGTH),
+                                 N: Vector2(0, -TILE_LENGTH),
+                                 NE: Vector2(+TILE_LENGTH, -TILE_LENGTH),
+                                 W: Vector2(-TILE_LENGTH, 0),
+                                 E: Vector2(+TILE_LENGTH, 0),
+                                 SW: Vector2(-TILE_LENGTH, +TILE_LENGTH),
+                                 S: Vector2(0, +TILE_LENGTH),
+                                 SE: Vector2(+TILE_LENGTH, +TILE_LENGTH)}
         for tile in self.tiles:
             for compass_dir, offset in neighbours_offset_map.items():
                 tile_pos = Vector2(tile.rect.x, tile.rect.y)

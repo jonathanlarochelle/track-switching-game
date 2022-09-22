@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # import built-in module
+import random
 
 # import third-party modules
 import pygame as pg
@@ -11,7 +12,6 @@ from trackswitchinggame.constants import *
 from trackswitchinggame.map import Map
 from trackswitchinggame.train import Train
 from trackswitchinggame.informationboard import InformationBoard
-import trackswitchinggame.instruction as instruction
 
 
 class Game:
@@ -20,8 +20,9 @@ class Game:
     """
 
     FPS = 30
-    SCREEN_WIDTH = 26 * TILE_LENGTH
-    SCREEN_HEIGHT = (8 + 6) * TILE_LENGTH
+    SCREEN_WIDTH = 27 * TILE_LENGTH
+    # SCREEN_HEIGHT = (8 + 6) * TILE_LENGTH
+    SCREEN_HEIGHT = 8 * TILE_LENGTH
 
     def __init__(self):
         pg.init()
@@ -41,13 +42,15 @@ class Game:
 
         # Initializing game entities
         self.map = Map()
-        self._init_trains()
+        self.trains = []
+        self._spawn_new_train()
 
         # Initializing game clock
         self.clock = pg.time.Clock()
 
         # Initializing information board
-        self.info_board = InformationBoard(self.SCREEN_WIDTH, 5, self.trains)
+        # self.info_board = InformationBoard(self.SCREEN_WIDTH, 5, self.trains)
+        self.score = 0
 
         # Ready to go
         self.running = True
@@ -55,9 +58,8 @@ class Game:
         # Game loop
         while self.running:
             # Update
-            for train in self.trains:
-                train.update()
-            self.info_board.update()
+            self._update_trains()
+            # self.info_board.update()
 
             # User events
             self._handle_events()
@@ -67,7 +69,7 @@ class Game:
             self.map.draw(self.screen)
             for train in self.trains:
                 train.draw(self.screen)
-            self.info_board.draw(self.screen, (0, 8*TILE_LENGTH))
+            # self.info_board.draw(self.screen, (0, 8*TILE_LENGTH))
             pg.display.update()
 
             self.clock.tick(self.FPS)
@@ -86,12 +88,12 @@ class Game:
                 mouse_position = pg.mouse.get_pos()
 
                 # Clicking on train toggles between start/stop
-                for train in self.trains:
-                    if train.rect.collidepoint(mouse_position):
-                        if train.moving:
-                            train.stop()
-                        else:
-                            train.start(train.direction)
+                # for train in self.trains:
+                #     if train.rect.collidepoint(mouse_position):
+                #         if train.moving:
+                #             train.stop()
+                #         else:
+                #             train.start(train.direction)
 
                 # Clicking on tile switches the track, if no train is currently on it.
                 clicked_tile = self.map.tile_at(Vector2(mouse_position))
@@ -108,26 +110,70 @@ class Game:
                     else:
                         clicked_tile.switch_track()
 
-    def _init_trains(self):
+    def _update_trains(self):
         """
-        Temporary factory to create all trains in the level.
+        Handles all updates for trains:
+        - spawn new trains
+        - calls .update() for all trains
+        - handles despawning and score counting
         """
-        self.trains.append(self._train_factory("1", 0, "B", "3", "E"))
-        self.trains.append(self._train_factory("2", 10*1000, "D", "2", "A"))
-        self.trains.append(self._train_factory("3", 20*1000, "D", "1", "A"))
-        self.trains.append(self._train_factory("4", 30*1000, "F", "6", "C"))
-        self.trains.append(self._train_factory("5", 40*1000, "C", "7", "F"))
-        self.trains.append(self._train_factory("6", 50*1000, "D", "5", "A"))
-        self.trains.append(self._train_factory("7", 60*1000, "C", "8", "F"))
-        self.trains.append(self._train_factory("8", 70 * 1000, "B", "4", "E"))
-        self.trains.append(self._train_factory("9", 90 * 1000, "D", "1", "A"))
+        # Spawn new train
+        if pg.time.get_ticks() > self._last_train_spawned + 15000:
+            self._spawn_new_train()
 
-    def _train_factory(self, id, entry_time, entry_portal, platform, exit_portal):
-        train = Train(id, self.map)
-        train.add_instruction(instruction.SpawnInstruction(train, entry_time, entry_portal))
-        train.add_instruction(instruction.PlatformStopInstruction(train, platform, 3000))
-        train.add_instruction(instruction.DespawnInstruction(train, exit_portal))
-        return train
+        for train in self.trains:
+            if train.spawned:
+                # Despawn trains outside of playing field
+                if not train.platform_status == PENDING and not train.exit_portal_status == PENDING:
+                    if not train.rect.colliderect(self.map.get_playing_field_rect()):
+                        train.despawn()
+                        if train.platform_status == SUCCEEDED:
+                            self.score += 1
+                        if train.exit_portal_status == SUCCEEDED:
+                            self.score += 1
+                        print(f"Score: {self.score}")
+
+                # Check for collisions
+
+                # Update
+                train.update()
+
+    def _spawn_new_train(self):
+        """
+        Spawns a new randomly-generated train if the time increment has been reached.
+        """
+        # Randomly generate a entry portal, a platform, and an exit portal for a train, with the following rules:
+        # Entry portal should not be the exit portal for any train currently generated
+        # Target platform should not be a platform TO BE reached for any current train.
+
+        legal_entry_portals = self.map.input_portals
+        legal_platforms = list(self.map.platforms.keys())
+        legal_exit_portals = self.map.output_portals
+        legal_palettes = {"ICE": [3]}
+
+        for train in self.trains:
+            if train.spawned:
+                if train.exit_portal in legal_entry_portals:
+                    legal_entry_portals.remove(train.exit_portal)
+                if train.platform in legal_platforms and \
+                        train.platform_status == PENDING and \
+                        train.moving:
+                    legal_platforms.remove(train.platform)
+
+        platform = random.choice(legal_platforms)
+        entry_portal = random.choice(list(set(legal_entry_portals) &
+                                          set(self.map.platforms_connecting_portals[platform])))
+        exit_portal = random.choice(list(set(legal_exit_portals) &
+                                         set(self.map.platforms_connecting_portals[platform])))
+        palette = random.choice(list(legal_palettes.keys()))
+        nb_wagons = random.choice(legal_palettes[palette])
+
+        new_train = Train(self.map, entry_portal, platform, exit_portal,
+                          nb_wagons, palette)
+        new_train.spawn()
+        self.trains.append(new_train)
+        self._last_train_spawned = pg.time.get_ticks()
+
 
     def quit(self):
         """

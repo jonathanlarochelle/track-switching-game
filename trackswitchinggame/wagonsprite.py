@@ -14,24 +14,13 @@ class WagonSprite(pg.sprite.Sprite):
     Representation of a wagon.
     """
 
-    def __init__(self, image, id, flip_wagon=False):
+    def __init__(self, image, flip_wagon=False):
         super().__init__()
 
         self.original_image = pg.image.load(image).convert_alpha()
         self.length = self.original_image.get_width()
         if flip_wagon:
             self.original_image = pg.transform.flip(self.original_image, True, False)
-
-        # Adding train ID on the train (temporary)
-        font = pg.font.SysFont("Verdana", 12)
-        train_id = font.render(id, True, pg.Color("black"))
-        rect = train_id.get_rect()
-        rect.x = 11
-        rect.y = 2
-        self.original_image.fill(pg.Color("white"), rect)
-        self.original_image.blit(train_id, rect)
-
-
 
         self.image = self.original_image
         self.rect = self.image.get_rect()
@@ -41,9 +30,8 @@ class WagonSprite(pg.sprite.Sprite):
         angle = math.atan(diff_vector.y / diff_vector.x) / math.pi * 180
         self.image = pg.transform.rotate(self.original_image, -angle)
         self.rect = self.image.get_rect()
+
+        # pg.draw.rect(self.image, pg.Color("red"), self.rect, width=1)
+
         self.rect.centerx = (position_axle_1.x + position_axle_2.x) / 2
         self.rect.centery = (position_axle_1.y + position_axle_2.y) / 2
-
-    def draw(self, screen: pg.surface.Surface):
-        # pg.draw.rect(screen, pg.color.Color("red"), self.rect, width=1)
-        screen.blit(self.image, self.rect)

@@ -9,7 +9,6 @@ from pygame import Vector2
 
 # import your own module
 from trackswitchinggame.wagonsprite import WagonSprite
-import trackswitchinggame.instruction as instruction
 import trackswitchinggame.map as map
 from trackswitchinggame.constants import *
 
@@ -20,16 +19,15 @@ class Train:
     The train's movement follow points stored in trajectory.
     """
 
-    def __init__(self, id, map: map.Map):
+    def __init__(self, map: map.Map, entry_portal: str, platform: str, exit_portal: str, nb_wagons: int, palette: str):
         # Set-up wagons
         self._wagons = pg.sprite.Group()
-        self._wagons.add(WagonSprite("assets/trains/ice_loc.png", id))
-        self._wagons.add(WagonSprite("assets/trains/ice_wagon.png", id))
-        self._wagons.add(WagonSprite("assets/trains/ice_loc.png", id, True))
+        self._wagons.add(WagonSprite("assets/trains/ice_loc.png"))
+        self._wagons.add(WagonSprite("assets/trains/ice_wagon.png"))
+        self._wagons.add(WagonSprite("assets/trains/ice_loc.png", True))
 
         self._map = map
 
-        self._instructions = []
         self.trajectory = list()
         self.rightmost_position_pointer = None  # Initialized when calling spawn()
 
@@ -39,21 +37,51 @@ class Train:
         self._waiting = False
         self.direction = None
         self._wait_end = 0
+        self._wait_total = 0
 
         # state can be "waiting for spawn", "spawned", "despawned"
         self._state = "waiting for spawn"
+
+        self._GOAL_INDICATOR_SIZE = 10
+        self._WAIT_INDICATOR_SIZE = 14
+        self._font = pg.font.SysFont("Verdana", self._GOAL_INDICATOR_SIZE-2)
+
+        # Goals
+        self.entry_portal = entry_portal
+        self.platform = platform
+        self.platform_status = PENDING
+        self.exit_portal = exit_portal
+        self.exit_portal_status = PENDING
+
+        # Prepare trajectory
+        portal_tile = self._map.portals[self.entry_portal].sprites()[0]
+        spawn_tile_traj = portal_tile.get_trajectory()
+        nb_padding_tiles = math.ceil(self.length / TILE_LENGTH)
+        if (portal_tile.get_neighbour(NW) is None) and \
+                (portal_tile.get_neighbour(W) is None) and \
+                (portal_tile.get_neighbour(SW) is None):
+            for i in range(nb_padding_tiles * TILE_LENGTH):
+                self.trajectory.append(Vector2(-(nb_padding_tiles * TILE_LENGTH) + i, spawn_tile_traj[0].y))
+            self.trajectory += spawn_tile_traj
+            self.direction = "forward"
+            self.rightmost_position_pointer = len(self.trajectory) - 31
+        elif (portal_tile.get_neighbour(NE) is None) and \
+                (portal_tile.get_neighbour(E) is None) and \
+                (portal_tile.get_neighbour(SE) is None):
+            self.trajectory += spawn_tile_traj
+            for i in range(nb_padding_tiles * TILE_LENGTH):
+                self.trajectory.append(Vector2(spawn_tile_traj[-1].x + i, spawn_tile_traj[0].y))
+            self.direction = "backward"
+            self.leftmost_position_pointer = 30
 
     def update(self):
         """
         Update position of the train
         """
-        # Instruction
-        for instr in self._instructions:
-            if not instr.fulfilled:
-                instr.update()
-                # If instruction was just fulfilled, we prevent other instructions from being checked until next frame.
-                if instr.fulfilled:
-                    break
+        if self.platform_status == PENDING:
+            self._check_for_platform()
+        elif self.exit_portal_status == PENDING:
+            self._check_for_exit_portal()
 
         if self.moving:
             # Update position
@@ -80,15 +108,51 @@ class Train:
                 self._waiting = False
                 self.start(self.direction)
 
-    def add_instruction(self, instruction: instruction.Instruction):
-        self._instructions.append(instruction)
-
     def draw(self, screen: pg.surface.Surface):
         """
         Draw the train.
         """
         if self.spawned:
+            # Draw wagons
             self._wagons.draw(screen)
+
+            # Draw current goal on first front-facing wagon
+            goal_indicator = pg.surface.Surface((self._GOAL_INDICATOR_SIZE, self._GOAL_INDICATOR_SIZE))
+
+            if self.platform_status == PENDING:
+                goal_indicator.fill(pg.Color("green"))
+                goal_indicator.blit(self._font.render(self.platform, True, pg.Color("black")),
+                                (3, 1))
+            elif self.exit_portal_status == PENDING:
+                goal_indicator.fill(pg.Color("blue"))
+                goal_indicator.blit(self._font.render(self.exit_portal, True, pg.Color("black")),
+                                    (3, 1))
+            else:
+                goal_indicator.set_alpha(0)
+
+            goal_indicator_rect = goal_indicator.get_rect()
+            if self.direction == "forward":
+                first_wagon = self._wagons.sprites()[0]
+            else:
+                first_wagon = self._wagons.sprites()[-1]
+            goal_indicator_rect.center = first_wagon.rect.center
+
+            screen.blit(goal_indicator, goal_indicator_rect)
+
+            if self.waiting:
+                # Draw wait indicator in front of train
+                wait_indicator = pg.Surface((self._WAIT_INDICATOR_SIZE, self._WAIT_INDICATOR_SIZE))
+                wait_indicator.fill(pg.Color("white"))
+                wait_indicator.set_colorkey(pg.Color("white"))
+                pg.draw.arc(wait_indicator, pg.Color("green"), wait_indicator.get_rect(),
+                            0, (self._wait_end - pg.time.get_ticks()) / self._wait_total * 2 * math.pi,
+                            2)
+                wait_indicator_rect = wait_indicator.get_rect()
+                if self.direction == "forward":
+                    wait_indicator_rect.center = self._wagons.sprites()[0].rect.center + Vector2(TILE_LENGTH, 0)
+                else:
+                    wait_indicator_rect.center = self._wagons.sprites()[-1].rect.center - Vector2(TILE_LENGTH, 0)
+                screen.blit(wait_indicator, wait_indicator_rect)
 
     def start(self, direction):
         """
@@ -104,33 +168,12 @@ class Train:
         """
         self._moving = False
 
-    def spawn(self, portal: str):
+    def spawn(self):
         """
         Spawn train.
         """
-        # Prepare trajectory
-        portal_tile = self._map.portals[portal].sprites()[0]
-        spawn_tile_traj = portal_tile.get_trajectory()
-        nb_padding_tiles = math.ceil(self.length / TILE_LENGTH)
-        if (portal_tile.get_neighbour(Compass.NW) is None) and \
-                (portal_tile.get_neighbour(Compass.W) is None) and \
-                (portal_tile.get_neighbour(Compass.SW) is None):
-            for i in range(nb_padding_tiles * TILE_LENGTH):
-                self.trajectory.append(Vector2(-(nb_padding_tiles * TILE_LENGTH) + i, spawn_tile_traj[0].y))
-            self.trajectory += spawn_tile_traj
-            direction = "forward"
-            self.rightmost_position_pointer = len(self.trajectory) - 31
-        elif (portal_tile.get_neighbour(Compass.NE) is None) and \
-                (portal_tile.get_neighbour(Compass.E) is None) and \
-                (portal_tile.get_neighbour(Compass.SE) is None):
-            self.trajectory += spawn_tile_traj
-            for i in range(nb_padding_tiles * TILE_LENGTH):
-                self.trajectory.append(Vector2(spawn_tile_traj[-1].x + i, spawn_tile_traj[0].y))
-            direction = "backward"
-            self.leftmost_position_pointer = 30
-
         self._spawned = True
-        self.start(direction)
+        self.start(self.direction)
 
     def despawn(self):
         """
@@ -144,8 +187,45 @@ class Train:
         Wait for number of milliseconds.
         """
         self._wait_end = pg.time.get_ticks() + milliseconds
+        self._wait_total = milliseconds
         self.stop()
         self._waiting = True
+
+    def _check_for_platform(self):
+        for platform, group in self._map.platforms.items():
+            rect = None
+            for sprite in group:
+                if not rect:
+                    rect = sprite.rect
+                else:
+                    rect = rect.union(sprite.rect)
+            if rect.contains(self.rect):
+                self.wait(3000)
+
+                # Change direction based on exit goal
+                train_position = self.trajectory[self.leftmost_position_pointer]
+                exit_portal_position = Vector2(self._map.portals[self.exit_portal].sprites()[0].rect.center)
+                if train_position.x - exit_portal_position.x > 0:
+                    self.direction = "backward"
+                else:
+                    self.direction = "forward"
+
+                # Check if platform goal was successful or not
+                if self.platform == platform:
+                    self.platform_status = SUCCEEDED
+                else:
+                    self.platform_status = FAILED
+                break
+
+    def _check_for_exit_portal(self):
+        for portal, group in self._map.portals.items():
+            tile = group.sprites()[0]
+            if self.rect.colliderect(tile.rect):
+                if tile.portal == self.exit_portal:
+                    self.exit_portal_status = SUCCEEDED
+                else:
+                    self.exit_portal_status = FAILED
+                break
 
     def _update_trajectory(self):
         if self.direction == "forward":
@@ -243,7 +323,3 @@ class Train:
     @property
     def wagons(self) -> pg.sprite.Group:
         return self._wagons
-
-    @property
-    def instructions(self) -> list[instruction.Instruction]:
-        return self._instructions
