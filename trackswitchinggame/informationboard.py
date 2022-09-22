@@ -8,83 +8,40 @@ from pygame.math import Vector2
 
 # import your own module
 from trackswitchinggame.constants import *
-import trackswitchinggame.instruction as instruction
 
 
 class InformationBoard(pg.surface.Surface):
     """
-    Handles the board containing all information of current and upcoming trains.
+    Handles the board containing score, etc.
     """
 
-    def __init__(self, width, nb_trains, trains, **kwargs):
-        height = (nb_trains + 1) * TILE_LENGTH
+    def __init__(self, width, **kwargs):
+        height = TILE_LENGTH
         super().__init__((width, height), **kwargs)
 
-        self.trains = trains
+        self.font = pg.font.SysFont("Verdana", 30)
+        self.bold_font = pg.font.SysFont("Verdana", 30)
+        self.bold_font.bold = True
 
-        self.title_font = pg.font.SysFont("Verdana", 30)
-        self.title_font.bold = True
-        self.table_header_font = pg.font.SysFont("Verdana", 25)
-        self.table_content_font = pg.font.SysFont("Verdana", 20)
+        self.score_label_text = self.bold_font.render("Score", True, pg.Color("white"))
+        self.speed_label_text = self.bold_font.render("Speed", True, pg.Color("white"))
 
-    def update(self):
+    def update(self, score: int, speed: int):
         self.fill(pg.Color("darkblue"))
 
-        # Title line
-        title_offset = Vector2(2, 2)
-        self.blit(self.title_font.render("Upcoming trains", True, pg.Color("white")),
-                  title_offset)
-        self.blit(self.table_header_font.render(str(int(pg.time.get_ticks()/1000)), True, pg.Color("white")),
-                  title_offset + Vector2(12*TILE_LENGTH, 0))
+        # Score
+        score_offset = Vector2(1, 1)
+        self.blit(self.score_label_text, score_offset)
+        score_text = self.font.render(str(score), True, pg.Color("white"))
+        score_text_position = score_offset + Vector2(self.score_label_text.get_rect().width, 0) + Vector2(5, 0)
+        self.blit(score_text, score_text_position)
 
-        # Table header
-        table_header_offset = title_offset + Vector2(0, 32)
-        self.blit(self.table_header_font.render("Time", True, pg.Color("white")),
-                  table_header_offset + Vector2(0, 0))
-        self.blit(self.table_header_font.render("Train", True, pg.Color("white")),
-                  table_header_offset + Vector2(2 * TILE_LENGTH, 0))
-        self.blit(self.table_header_font.render("From", True, pg.Color("white")),
-                  table_header_offset + Vector2(4 * TILE_LENGTH, 0))
-        self.blit(self.table_header_font.render("Platform", True, pg.Color("white")),
-                  table_header_offset + Vector2(6 * TILE_LENGTH, 0))
-        self.blit(self.table_header_font.render("To", True, pg.Color("white")),
-                  table_header_offset + Vector2(10 * TILE_LENGTH, 0))
-
-        # Table rows (one row per train)
-        rows_offset = table_header_offset + Vector2(0, 32)
-        for train in self.trains:
-            for instr in train._instructions:
-                if isinstance(instr, instruction.DespawnInstruction):
-                    if not instr.fulfilled:
-
-                        self.blit(train.wagons.sprites()[0].original_image, rows_offset + Vector2(2 * TILE_LENGTH, 0))
-                        for instr in train._instructions:
-                            if isinstance(instr, instruction.SpawnInstruction):
-                                self.blit(self.table_content_font.render(str(int(instr.spawn_time/1000)), True, pg.Color("white")),
-                                          rows_offset)
-                                self.blit(self.table_content_font.render(instr.spawn_portal, True, pg.Color("white")),
-                                          rows_offset + Vector2(4 * TILE_LENGTH, 0))
-                                if instr.fulfilled:
-                                    self.blit(self.table_content_font.render("o", True, pg.Color("green")),
-                                              rows_offset + Vector2(4.5 * TILE_LENGTH, 0))
-                                else:
-                                    self.blit(self.table_content_font.render("x", True, pg.Color("red")),
-                                              rows_offset + Vector2(4.5 * TILE_LENGTH, 0))
-
-                            if isinstance(instr, instruction.DespawnInstruction):
-                                self.blit(self.table_content_font.render(instr.despawn_portal, True, pg.Color("white")),
-                                          rows_offset + Vector2(10 * TILE_LENGTH, 0))
-
-                            if isinstance(instr, instruction.PlatformStopInstruction):
-                                self.blit(self.table_content_font.render(instr.platform, True, pg.Color("white")),
-                                          rows_offset + Vector2(6 * TILE_LENGTH, 0))
-                                if instr.fulfilled:
-                                    self.blit(self.table_content_font.render("o", True, pg.Color("green")),
-                                              rows_offset + Vector2(6.5 * TILE_LENGTH, 0))
-                                else:
-                                    self.blit(self.table_content_font.render("x", True, pg.Color("red")),
-                                              rows_offset + Vector2(6.5 * TILE_LENGTH, 0))
-                        rows_offset += Vector2(0, 32)
+        # Speed
+        speed_offset = Vector2(5*TILE_LENGTH, 1)
+        self.blit(self.speed_label_text, Vector2(5 * TILE_LENGTH, 2))
+        speed_text = self.font.render(str(speed), True, pg.Color("white"))
+        speed_text_position = speed_offset + Vector2(self.speed_label_text.get_rect().width, 0) + Vector2(5, 0)
+        self.blit(speed_text, speed_text_position)
 
     def draw(self, surface, position):
         surface.blit(self, position)

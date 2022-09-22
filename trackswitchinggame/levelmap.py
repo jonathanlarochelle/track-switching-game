@@ -12,7 +12,7 @@ from trackswitchinggame.tracktile import TrackTile
 from trackswitchinggame.constants import *
 
 
-class Map:
+class LevelMap:
     """
     Represents a map of tiles
     """
@@ -62,7 +62,7 @@ class Map:
                                              "5": ["A", "B", "C", "F", "G"],
                                              "6": ["A", "B", "C", "F", "G"],
                                              "7": ["A", "B", "C", "F", "G"],
-                                             "8":["A", "B", "C", "F", "G"]}
+                                             "8": ["A", "B", "C", "F", "G"]}
 
     def draw(self, surf: pg.surface.Surface):
         for tile in self.tiles.sprites():
@@ -120,7 +120,7 @@ class Map:
                     tile_row.append(new_tile)
                     self._tiles.add(new_tile)
             tiles_array.append(tile_row)
-            del tile_row # Check if necessary
+            del tile_row  # Check if necessary
 
         # Find neighbours
         neighbours_offset_map = {NW: Vector2(-TILE_LENGTH, -TILE_LENGTH),
@@ -137,7 +137,6 @@ class Map:
                 neighbour_tile = self.tile_at(tile_pos + offset)
                 if neighbour_tile:
                     tile.set_neighbour(compass_dir, neighbour_tile)
-
 
     @property
     def tiles(self) -> pg.sprite.Group:

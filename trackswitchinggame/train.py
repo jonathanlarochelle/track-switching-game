@@ -9,7 +9,7 @@ from pygame import Vector2
 
 # import your own module
 from trackswitchinggame.wagonsprite import WagonSprite
-import trackswitchinggame.map as map
+from trackswitchinggame.levelmap import LevelMap
 from trackswitchinggame.constants import *
 
 
@@ -19,17 +19,25 @@ class Train:
     The train's movement follow points stored in trajectory.
     """
 
-    def __init__(self, map: map.Map, entry_portal: str, platform: str, exit_portal: str, nb_wagons: int, palette: str):
+    WAIT_DELAY_VS_SPEED = {1: 5000,
+                           2: 4000,
+                           3: 3000,
+                           4: 2000,
+                           5: 1000}
+
+    def __init__(self, levelmap: LevelMap, entry_portal: str, platform: str, exit_portal: str, nb_wagons: int, palette: str):
         # Set-up wagons
         self._wagons = pg.sprite.Group()
         self._wagons.add(WagonSprite("assets/trains/ice_loc.png"))
         self._wagons.add(WagonSprite("assets/trains/ice_wagon.png"))
         self._wagons.add(WagonSprite("assets/trains/ice_loc.png", True))
 
-        self._map = map
+        self._levelmap = levelmap
 
         self.trajectory = list()
         self.rightmost_position_pointer = None  # Initialized when calling spawn()
+
+        self.speed = 1
 
         # State variables
         self._spawned = False
@@ -38,9 +46,6 @@ class Train:
         self.direction = None
         self._wait_end = 0
         self._wait_total = 0
-
-        # state can be "waiting for spawn", "spawned", "despawned"
-        self._state = "waiting for spawn"
 
         self._GOAL_INDICATOR_SIZE = 10
         self._WAIT_INDICATOR_SIZE = 14
@@ -54,7 +59,7 @@ class Train:
         self.exit_portal_status = PENDING
 
         # Prepare trajectory
-        portal_tile = self._map.portals[self.entry_portal].sprites()[0]
+        portal_tile = self._levelmap.portals[self.entry_portal].sprites()[0]
         spawn_tile_traj = portal_tile.get_trajectory()
         nb_padding_tiles = math.ceil(self.length / TILE_LENGTH)
         if (portal_tile.get_neighbour(NW) is None) and \
@@ -64,7 +69,7 @@ class Train:
                 self.trajectory.append(Vector2(-(nb_padding_tiles * TILE_LENGTH) + i, spawn_tile_traj[0].y))
             self.trajectory += spawn_tile_traj
             self.direction = "forward"
-            self.rightmost_position_pointer = len(self.trajectory) - 31
+            self.rightmost_position_pointer = len(self.trajectory) - 1
         elif (portal_tile.get_neighbour(NE) is None) and \
                 (portal_tile.get_neighbour(E) is None) and \
                 (portal_tile.get_neighbour(SE) is None):
@@ -72,7 +77,7 @@ class Train:
             for i in range(nb_padding_tiles * TILE_LENGTH):
                 self.trajectory.append(Vector2(spawn_tile_traj[-1].x + i, spawn_tile_traj[0].y))
             self.direction = "backward"
-            self.leftmost_position_pointer = 30
+            self.leftmost_position_pointer = 0
 
     def update(self):
         """
@@ -122,7 +127,7 @@ class Train:
             if self.platform_status == PENDING:
                 goal_indicator.fill(pg.Color("green"))
                 goal_indicator.blit(self._font.render(self.platform, True, pg.Color("black")),
-                                (3, 1))
+                                    (3, 1))
             elif self.exit_portal_status == PENDING:
                 goal_indicator.fill(pg.Color("blue"))
                 goal_indicator.blit(self._font.render(self.exit_portal, True, pg.Color("black")),
@@ -174,6 +179,19 @@ class Train:
         """
         self._spawned = True
         self.start(self.direction)
+        self.wait(self.WAIT_DELAY_VS_SPEED[self.speed])
+
+        current_offset = self.rightmost_position_pointer
+
+        for wagon in self._wagons.sprites():
+            # Should the position of the axles be handled individually by each wagon?
+            # Do we want wagons to have a variable axle offset??
+            axle_1_pointer = current_offset - 5
+            axle_2_pointer = current_offset - 25
+            position_axle_1 = self.trajectory[axle_1_pointer]
+            position_axle_2 = self.trajectory[axle_2_pointer]
+            wagon.update(position_axle_1, position_axle_2)
+            current_offset -= wagon.length
 
     def despawn(self):
         """
@@ -192,7 +210,7 @@ class Train:
         self._waiting = True
 
     def _check_for_platform(self):
-        for platform, group in self._map.platforms.items():
+        for platform, group in self._levelmap.platforms.items():
             rect = None
             for sprite in group:
                 if not rect:
@@ -200,11 +218,11 @@ class Train:
                 else:
                     rect = rect.union(sprite.rect)
             if rect.contains(self.rect):
-                self.wait(3000)
+                self.wait(self.WAIT_DELAY_VS_SPEED[self.speed])
 
                 # Change direction based on exit goal
                 train_position = self.trajectory[self.leftmost_position_pointer]
-                exit_portal_position = Vector2(self._map.portals[self.exit_portal].sprites()[0].rect.center)
+                exit_portal_position = Vector2(self._levelmap.portals[self.exit_portal].sprites()[0].rect.center)
                 if train_position.x - exit_portal_position.x > 0:
                     self.direction = "backward"
                 else:
@@ -218,7 +236,7 @@ class Train:
                 break
 
     def _check_for_exit_portal(self):
-        for portal, group in self._map.portals.items():
+        for portal, group in self._levelmap.portals.items():
             tile = group.sprites()[0]
             if self.rect.colliderect(tile.rect):
                 if tile.portal == self.exit_portal:
@@ -233,7 +251,7 @@ class Train:
                 # We need to fetch trajectory information from next tile
                 train_vector = self.trajectory[-1] - self.trajectory[-2]
                 next_tile_position = self.trajectory[-1] + train_vector
-                next_tile = self._map.tile_at(next_tile_position)
+                next_tile = self._levelmap.tile_at(next_tile_position)
                 if next_tile:
                     new_trajectory = next_tile.get_trajectory()
                     # Check if our entry point is valid for the next tile
@@ -255,7 +273,7 @@ class Train:
                 # We need to fetch trajectory information from previous tile
                 train_vector = self.trajectory[0] - self.trajectory[1]
                 next_tile_position = self.trajectory[0] + train_vector
-                next_tile = self._map.tile_at(next_tile_position)
+                next_tile = self._levelmap.tile_at(next_tile_position)
                 if next_tile:
                     new_trajectory = next_tile.get_trajectory()
                     # Check if our entry point is valid for the next tile
@@ -267,7 +285,7 @@ class Train:
                     # Padding with a straight trajectory for now.
                     last_point = self.trajectory[0]
                     self.trajectory = [last_point + Vector2(-TILE_LENGTH + i, 0) for i in
-                                        range(TILE_LENGTH)] + self.trajectory
+                                       range(TILE_LENGTH)] + self.trajectory
                     self.rightmost_position_pointer += TILE_LENGTH
 
             if (self.rightmost_position_pointer + self.trajectory_pointer_increment) < (
@@ -287,9 +305,9 @@ class Train:
     def trajectory_pointer_increment(self):
         if self.moving:
             if self.direction == "forward":
-                return +1
+                return self.speed
             elif self.direction == "backward":
-                return -1
+                return -1*self.speed
         else:
             return 0
 

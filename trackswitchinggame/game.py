@@ -9,7 +9,7 @@ from pygame.math import Vector2
 
 # import your own module
 from trackswitchinggame.constants import *
-from trackswitchinggame.map import Map
+from trackswitchinggame.levelmap import LevelMap
 from trackswitchinggame.train import Train
 from trackswitchinggame.informationboard import InformationBoard
 
@@ -21,8 +21,13 @@ class Game:
 
     FPS = 30
     SCREEN_WIDTH = 27 * TILE_LENGTH
-    # SCREEN_HEIGHT = (8 + 6) * TILE_LENGTH
-    SCREEN_HEIGHT = 8 * TILE_LENGTH
+    SCREEN_HEIGHT = (8 + 1) * TILE_LENGTH
+
+    SPAWN_DELAY_VS_SPEED = {1: 15000,
+                            2: 12000,
+                            3: 9000,
+                            4: 7000,
+                            5: 5000}
 
     def __init__(self):
         pg.init()
@@ -32,6 +37,8 @@ class Game:
         self.map = None
         self.trains = []
         self.info_board = None
+        self.trains_speed = 0
+        self.score = 0
 
     def run(self):
         """
@@ -41,15 +48,16 @@ class Game:
         pg.display.set_caption("Track Switching Game")
 
         # Initializing game entities
-        self.map = Map()
+        self.map = LevelMap()
         self.trains = []
+        self.trains_speed = 1
         self._spawn_new_train()
 
         # Initializing game clock
         self.clock = pg.time.Clock()
 
         # Initializing information board
-        # self.info_board = InformationBoard(self.SCREEN_WIDTH, 5, self.trains)
+        self.info_board = InformationBoard(self.SCREEN_WIDTH)
         self.score = 0
 
         # Ready to go
@@ -58,8 +66,9 @@ class Game:
         # Game loop
         while self.running:
             # Update
+            self._update_speed()
             self._update_trains()
-            # self.info_board.update()
+            self.info_board.update(self.score, self.trains_speed)
 
             # User events
             self._handle_events()
@@ -69,7 +78,7 @@ class Game:
             self.map.draw(self.screen)
             for train in self.trains:
                 train.draw(self.screen)
-            # self.info_board.draw(self.screen, (0, 8*TILE_LENGTH))
+            self.info_board.draw(self.screen, (0, 8*TILE_LENGTH))
             pg.display.update()
 
             self.clock.tick(self.FPS)
@@ -118,7 +127,7 @@ class Game:
         - handles despawning and score counting
         """
         # Spawn new train
-        if pg.time.get_ticks() > self._last_train_spawned + 15000:
+        if pg.time.get_ticks() > self._last_train_spawned + self.SPAWN_DELAY_VS_SPEED[self.trains_speed]:
             self._spawn_new_train()
 
         for train in self.trains:
@@ -131,7 +140,6 @@ class Game:
                             self.score += 1
                         if train.exit_portal_status == SUCCEEDED:
                             self.score += 1
-                        print(f"Score: {self.score}")
 
                 # Check for collisions
 
@@ -171,9 +179,22 @@ class Game:
         new_train = Train(self.map, entry_portal, platform, exit_portal,
                           nb_wagons, palette)
         new_train.spawn()
+        new_train.speed = self.trains_speed
         self.trains.append(new_train)
         self._last_train_spawned = pg.time.get_ticks()
 
+    def _update_speed(self):
+        """
+        If certain criteria are met, change the trains speed.
+        """
+        if self.score >= 10:
+            self.trains_speed = 2
+        if self.score >= 20:
+            self.trains_speed = 3
+        if self.score >= 30:
+            self.trains_speed = 4
+        if self.score >= 40:
+            self.trains_speed = 5
 
     def quit(self):
         """

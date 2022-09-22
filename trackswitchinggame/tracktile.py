@@ -56,7 +56,7 @@ class TrackTile(pg.sprite.Sprite):
                 self.active_path = "main"
             self._update_image()
 
-    def get_trajectory(self):
+    def get_trajectory(self) -> list[Vector2]:
         # Give list of points corresponding to the current track configuration
         trajectory = list()
 
