@@ -102,11 +102,12 @@ class Train:
                     # Should the position of the axles be handled individually by each wagon?
                     # Do we want wagons to have a variable axle offset??
                     axle_1_pointer = current_offset - 5
-                    axle_2_pointer = current_offset - 25
+                    axle_2_pointer = current_offset - 24
                     position_axle_1 = self.trajectory[axle_1_pointer]
                     position_axle_2 = self.trajectory[axle_2_pointer]
                     wagon.update(position_axle_1, position_axle_2)
                     current_offset -= wagon.length
+                    wagon.rect.x = self.trajectory[current_offset + 1].x
 
         if self.waiting:
             if pg.time.get_ticks() > self._wait_end:
@@ -149,7 +150,7 @@ class Train:
                 wait_indicator = pg.Surface((self._WAIT_INDICATOR_SIZE, self._WAIT_INDICATOR_SIZE))
                 wait_indicator.fill(pg.Color("white"))
                 wait_indicator.set_colorkey(pg.Color("white"))
-                pg.draw.arc(wait_indicator, pg.Color("green"), wait_indicator.get_rect(),
+                pg.draw.arc(wait_indicator, pg.Color("darkorange"), wait_indicator.get_rect(),
                             0, (self._wait_end - pg.time.get_ticks()) / self._wait_total * 2 * math.pi,
                             2)
                 wait_indicator_rect = wait_indicator.get_rect()
@@ -187,7 +188,7 @@ class Train:
             # Should the position of the axles be handled individually by each wagon?
             # Do we want wagons to have a variable axle offset??
             axle_1_pointer = current_offset - 5
-            axle_2_pointer = current_offset - 25
+            axle_2_pointer = current_offset - 24
             position_axle_1 = self.trajectory[axle_1_pointer]
             position_axle_2 = self.trajectory[axle_2_pointer]
             wagon.update(position_axle_1, position_axle_2)
@@ -208,6 +209,12 @@ class Train:
         self._wait_total = milliseconds
         self.stop()
         self._waiting = True
+
+    def colliderect(self, rect: pg.Rect) -> bool:
+        for point in self.trajectory[self.leftmost_position_pointer:self.rightmost_position_pointer]:
+            if rect.collidepoint(point.x, point.y):
+                return True
+        return False
 
     def _check_for_platform(self):
         for platform, group in self._levelmap.platforms.items():
@@ -295,11 +302,11 @@ class Train:
 
     @property
     def leftmost_position_pointer(self):
-        return self.rightmost_position_pointer - self.length
+        return self.rightmost_position_pointer - self.length + 1
 
     @leftmost_position_pointer.setter
     def leftmost_position_pointer(self, p):
-        self.rightmost_position_pointer = p + self.length
+        self.rightmost_position_pointer = p + self.length - 1
 
     @property
     def trajectory_pointer_increment(self):

@@ -65,13 +65,13 @@ class Game:
 
         # Game loop
         while self.running:
+            # User events
+            self._handle_events()
+
             # Update
             self._update_speed()
             self._update_trains()
             self.info_board.update(self.score, self.trains_speed)
-
-            # User events
-            self._handle_events()
 
             # Re-draw screen
             self.screen.fill(pg.Color("white"))
@@ -107,17 +107,15 @@ class Game:
                 # Clicking on tile switches the track, if no train is currently on it.
                 clicked_tile = self.map.tile_at(Vector2(mouse_position))
                 if clicked_tile:
-                    # Not colliding with train.rect here because for some reason the rect overlaps to next tile when
-                    # train is not yet on it (sometimes).
-                    # TODO: Correct this.
                     for train in self.trains:
-                        if train.spawned:
-                            point_1 = train.trajectory[train.rightmost_position_pointer]
-                            point_2 = train.trajectory[train.leftmost_position_pointer]
-                            if clicked_tile.rect.collidepoint(point_1) or clicked_tile.rect.collidepoint(point_2):
-                                break
+                        if train.colliderect(clicked_tile.rect):
+                            break
                     else:
                         clicked_tile.switch_track()
+            if event.type == pg.KEYDOWN and event.key == pg.K_RETURN and DEBUG:
+                # Debug key to break execution
+                print("Breakpoint activated.")
+
 
     def _update_trains(self):
         """

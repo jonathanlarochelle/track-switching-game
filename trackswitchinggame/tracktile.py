@@ -89,11 +89,11 @@ class TrackTile(pg.sprite.Sprite):
     def _update_image(self):
         # Portals and platforms have specific background text and colors
         if self.portal is not None:
-            self.image.fill(pg.Color("blue"))
+            self.image.fill(pg.Color("lightblue"))
             text = self._font.render(self.portal, True, pg.Color("darkblue"))
             self.image.blit(text, (3, 1))
         elif self.platform is not None:
-            self.image.fill(pg.Color("green"))
+            self.image.fill(pg.Color("lightgreen"))
             text = self._font.render(self.platform, True, pg.Color("darkgreen"))
             self.image.blit(text, (6, 1))
         else:
@@ -115,9 +115,13 @@ class TrackTile(pg.sprite.Sprite):
             tmp_tile = pg.image.load(f"assets/tiles/{self.alt_path}.png").convert_alpha()
         self.image.blit(tmp_tile, (0, 0))
 
-        # Draw trajectory in red on top (debug)
-        for point in self.get_trajectory():
-            self.image.fill(pg.Color("red"), (point - self.position, (1, 1)))
+        if DEBUG:
+            # Draw trajectory in red on top (debug)
+            for point in self.get_trajectory():
+                self.image.fill(pg.Color("lightcoral"), (point - self.position, (1, 1)))
+
+            # Draw limits in red on top (debug)
+            pg.draw.rect(self.image, pg.Color("lightcoral"), self.image.get_rect(), 1)
 
         self.rect = self.image.get_rect()
         self.rect.x = self.position[0]

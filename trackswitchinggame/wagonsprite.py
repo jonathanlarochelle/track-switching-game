@@ -7,6 +7,7 @@ import math
 import pygame as pg
 
 # import your own module
+from trackswitchinggame.constants import *
 
 
 class WagonSprite(pg.sprite.Sprite):
@@ -31,7 +32,8 @@ class WagonSprite(pg.sprite.Sprite):
         self.image = pg.transform.rotate(self.original_image, -angle)
         self.rect = self.image.get_rect()
 
-        # pg.draw.rect(self.image, pg.Color("red"), self.rect, width=1)
+        if DEBUG:
+            pg.draw.rect(self.image, pg.Color("lightcoral"), self.rect, width=1)
 
         self.rect.centerx = (position_axle_1.x + position_axle_2.x) / 2
         self.rect.centery = (position_axle_1.y + position_axle_2.y) / 2
