@@ -23,3 +23,5 @@ NE = "NE"
 SW = "SW"
 SE = "SE"
 DEBUG = False
+FORWARD = "forward"
+BACKWARD = "backward"

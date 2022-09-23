@@ -14,7 +14,8 @@ from trackswitchinggame.constants import *
 
 class LevelMap:
     """
-    Represents a map of tiles
+    Represents a map of tiles.
+    TODO: Have levels be loaded from ext file.
     """
 
     def __init__(self):

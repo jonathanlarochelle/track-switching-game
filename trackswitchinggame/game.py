@@ -96,14 +96,6 @@ class Game:
             if event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
                 mouse_position = pg.mouse.get_pos()
 
-                # Clicking on train toggles between start/stop
-                # for train in self.trains:
-                #     if train.rect.collidepoint(mouse_position):
-                #         if train.moving:
-                #             train.stop()
-                #         else:
-                #             train.start(train.direction)
-
                 # Clicking on tile switches the track, if no train is currently on it.
                 clicked_tile = self.map.tile_at(Vector2(mouse_position))
                 if clicked_tile:
@@ -115,7 +107,6 @@ class Game:
             if event.type == pg.KEYDOWN and event.key == pg.K_RETURN and DEBUG:
                 # Debug key to break execution
                 print("Breakpoint activated.")
-
 
     def _update_trains(self):
         """
@@ -148,14 +139,13 @@ class Game:
         """
         Spawns a new randomly-generated train if the time increment has been reached.
         """
-        # Randomly generate a entry portal, a platform, and an exit portal for a train, with the following rules:
+        # Randomly generate an entry portal, a platform, and an exit portal for a train, with the following rules:
         # Entry portal should not be the exit portal for any train currently generated
         # Target platform should not be a platform TO BE reached for any current train.
 
         legal_entry_portals = self.map.input_portals
         legal_platforms = list(self.map.platforms.keys())
         legal_exit_portals = self.map.output_portals
-        legal_palettes = {"ICE": [3]}
 
         for train in self.trains:
             if train.spawned:
@@ -171,11 +161,8 @@ class Game:
                                           set(self.map.platforms_connecting_portals[platform])))
         exit_portal = random.choice(list(set(legal_exit_portals) &
                                          set(self.map.platforms_connecting_portals[platform])))
-        palette = random.choice(list(legal_palettes.keys()))
-        nb_wagons = random.choice(legal_palettes[palette])
 
-        new_train = Train(self.map, entry_portal, platform, exit_portal,
-                          nb_wagons, palette)
+        new_train = Train(self.map, entry_portal, platform, exit_portal)
         new_train.spawn()
         new_train.speed = self.trains_speed
         self.trains.append(new_train)

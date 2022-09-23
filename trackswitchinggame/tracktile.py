@@ -60,10 +60,6 @@ class TrackTile(pg.sprite.Sprite):
         # Give list of points corresponding to the current track configuration
         trajectory = list()
 
-        partial_traj_diagonal_going_down = [Vector2(i, i) for i in range(16)]
-        partial_traj_diagonal_going_up = [Vector2(i, 15-i) for i in range(16)]
-        partial_traj_straight = [Vector2(i, 0) for i in range(16)]
-
         current_path = str()
         if self.active_path == "main":
             current_path = self.main_path
@@ -130,5 +126,5 @@ class TrackTile(pg.sprite.Sprite):
     def set_neighbour(self, compass_direction: str, tile: "TrackTile"):
         self._neighbours[compass_direction] = tile
 
-    def get_neighbour(self, compass_direction: str):
+    def get_neighbour(self, compass_direction: str) -> "TrackTile":
         return self._neighbours[compass_direction]
