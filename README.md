@@ -1,7 +1,7 @@
 # Track Switching Game v0.1
 You are in control of the train tracks of a train station and must quickly route incoming trains to their desired platforms!
 
-![Screenshot of Freiburg level](https://github.com/theMashUp/track-switching-game/assets/screenshot.png?raw=true "Screenshot of Freiburg level")
+![Screenshot of Freiburg level](/assets/screenshot.png)
 
 ## Getting started
 To play the game, first clone this repository.
