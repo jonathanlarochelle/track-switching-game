@@ -49,7 +49,7 @@ class Train:
 
         self._GOAL_INDICATOR_SIZE = 10
         self._WAIT_INDICATOR_SIZE = 14
-        self._font = pg.font.SysFont("Verdana", self._GOAL_INDICATOR_SIZE-2)
+        self._font = pg.font.SysFont("Verdana", self._GOAL_INDICATOR_SIZE)
 
         # Goals
         self.entry_portal = entry_portal
@@ -126,11 +126,11 @@ class Train:
             goal_indicator = pg.surface.Surface((self._GOAL_INDICATOR_SIZE, self._GOAL_INDICATOR_SIZE))
 
             if self.platform_status == PENDING:
-                goal_indicator.fill(pg.Color("green"))
+                goal_indicator.fill(pg.Color("lightgreen"))
                 goal_indicator.blit(self._font.render(self.platform, True, pg.Color("black")),
                                     (3, 1))
             elif self.exit_portal_status == PENDING:
-                goal_indicator.fill(pg.Color("blue"))
+                goal_indicator.fill(pg.Color("lightblue"))
                 goal_indicator.blit(self._font.render(self.exit_portal, True, pg.Color("black")),
                                     (3, 1))
             else:
