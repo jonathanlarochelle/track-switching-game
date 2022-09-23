@@ -2,6 +2,7 @@
 
 # import built-in module
 from typing import Union
+import json
 
 # import third-party modules
 import pygame as pg
@@ -15,55 +16,35 @@ from trackswitchinggame.constants import *
 class LevelMap:
     """
     Represents a map of tiles.
-    TODO: Have levels be loaded from ext file.
     """
 
-    def __init__(self):
-        map_array = [["mm+A", "mm+md", "mm", "mm", "mm", "mm+md", "mm", "mm", "mm", "mm+dm", "mm", "mm", "mm", "mm",
-                      "mm+1", "mm+1", "mm+1", "mm", "mm+dm", "mm+md", "mm", "mm", "mm", "mm", "mm+dm", "mm", "mm+D"],
-                     ["", "", "ud", "", "", "", "um", "mm+dm", "mm+mu", "mm", "mm", "mm", "mm", "mm", "mm+2", "mm+2",
-                      "mm+2", "mm+mu", "md", "", "ud", "", "", "du", "", "", ""],
-                     ["mm+B", "mm", "mm", "mm+um", "mm+md", "mm", "mm+mu", "mm", "mm", "mm", "mm", "mm", "mm", "mm",
-                      "mm+3", "mm+3", "mm+3", "mm", "mm+dm", "mm+um", "mm", "mm+um", "mm+mu", "mm", "mm", "mm", "mm+E"],
-                     ["", "", "", "", "", "um", "mm+md", "mm", "mm", "mm+dm", "mm", "mm+md", "mm", "mm", "mm+4", "mm+4",
-                      "mm+4", "mm+mu", "md", "", "", "", "", "", "", "", ""],
-                     ["mm+C", "mm", "mm", "mm", "mm", "mm", "mm", "mm+um", "mm+mu", "mm+md", "mm", "mm", "mm+um", "mm",
-                      "mm+5", "mm+5", "mm+5", "md", "", "ud", "", "", "", "", "", "", ""],
-                     ["", "", "", "", "", "", "", "", "", "", "um", "mm+md", "mm", "mm", "mm+6", "mm+6", "mm+6", "mm",
-                      "mm+um", "mm", "mm+um", "mm+dm", "mm+md", "mm", "mm", "mm", "mm+F"],
-                     ["", "", "", "", "", "", "", "", "", "", "", "", "um", "mm+md", "mm", "mm+7", "mm+7", "mm+7", "mm",
-                      "mm+dm", "mm+mu", "mm", "mm", "mm+um", "mm", "mm", "mm+G"],
-                     ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "um", "mm+8", "mm+8", "mm+8", "mu", "",
-                      "", "", "", "", "", "", ""]]
+    def __init__(self, level_file: str):
         self._tiles = pg.sprite.Group()
         self._nb_rows = 0
         self._nb_cols = 0
-        self._parse_raw_map(map_array)
 
-        self.portals = dict()
-        self.platforms = dict()
+        # Load level from file
+        with open(level_file) as f:
+            data = json.load(f)
+            self._entry_portals = data["entry_portals"]
+            self._exit_portals = data["exit_portals"]
+            self._platform_portal_connections = data["platform_portal_connections"]
+            self._parse_raw_map(data["track_tiles"])
+            self._level_name = data["name"]
+
+        self._portals = dict()
+        self._platforms = dict()
         for tile in self.tiles.sprites():
             if tile.portal is not None:
                 try:
-                    self.portals[tile.portal].add(tile)
+                    self._portals[tile.portal].add(tile)
                 except KeyError:
-                    self.portals[tile.portal] = pg.sprite.Group(tile)
+                    self._portals[tile.portal] = pg.sprite.Group(tile)
             if tile.platform is not None:
                 try:
-                    self.platforms[tile.platform].add(tile)
+                    self._platforms[tile.platform].add(tile)
                 except KeyError:
-                    self.platforms[tile.platform] = pg.sprite.Group(tile)
-
-        self.input_portals = ["B", "C", "D", "F"]
-        self.output_portals = ["A", "C", "E", "G"]
-        self.platforms_connecting_portals = {"1": ["A", "B", "D", "E"],
-                                             "2": ["A", "B", "D", "E"],
-                                             "3": ["A", "B", "D", "E"],
-                                             "4": ["A", "B", "C", "D", "E", "F", "G"],
-                                             "5": ["A", "B", "C", "F", "G"],
-                                             "6": ["A", "B", "C", "F", "G"],
-                                             "7": ["A", "B", "C", "F", "G"],
-                                             "8": ["A", "B", "C", "F", "G"]}
+                    self._platforms[tile.platform] = pg.sprite.Group(tile)
 
     def draw(self, surf: pg.surface.Surface):
         for tile in self.tiles.sprites():
@@ -116,7 +97,7 @@ class LevelMap:
                                 tracktile_portal = param
                         else:
                             pass
-                    new_tile = TrackTile((col_id * TILE_LENGTH, row_id * TILE_LENGTH), tracktile_mainpath,
+                    new_tile = TrackTile(Vector2(col_id * TILE_LENGTH, row_id * TILE_LENGTH), tracktile_mainpath,
                                          tracktile_altpath, tracktile_portal, tracktile_platform)
                     tile_row.append(new_tile)
                     self._tiles.add(new_tile)
@@ -144,6 +125,14 @@ class LevelMap:
         return self._tiles
 
     @property
+    def portals(self) -> dict:
+        return self._portals
+
+    @property
+    def platforms(self) -> dict:
+        return self._platforms
+
+    @property
     def nb_rows(self) -> int:
         return self._nb_rows
 
@@ -151,3 +140,18 @@ class LevelMap:
     def nb_cols(self) -> int:
         return self._nb_cols
 
+    @property
+    def entry_portals(self) -> list[str]:
+        return self._entry_portals
+
+    @property
+    def exit_portals(self) -> list[str]:
+        return self._exit_portals
+
+    @property
+    def platform_portal_connections(self) -> dict[str]:
+        return self._platform_portal_connections
+
+    @property
+    def level_name(self) -> str:
+        return self._level_name

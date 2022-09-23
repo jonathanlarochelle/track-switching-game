@@ -2,6 +2,7 @@
 
 # import built-in module
 import random
+import json
 
 # import third-party modules
 import pygame as pg
@@ -20,8 +21,6 @@ class Game:
     """
 
     FPS = 30
-    SCREEN_WIDTH = 27 * TILE_LENGTH
-    SCREEN_HEIGHT = (8 + 1) * TILE_LENGTH
 
     SPAWN_DELAY_VS_SPEED = {1: 15000,
                             2: 12000,
@@ -39,16 +38,26 @@ class Game:
         self.info_board = None
         self.trains_speed = 0
         self.score = 0
+        self.SCREEN_WIDTH = None
+        self.SCREEN_HEIGHT = None
 
-    def run(self):
+    def run(self, level_file: str):
         """
         Start the game.
         """
+        # We look for the map's nb of cols and rows before loading it, because the loading operation (via the loading
+        # of the tiles) requires the display video mode to be set.
+        with open(level_file) as f:
+            data = json.load(f)
+            nb_rows = len(data["track_tiles"])
+            nb_cols = len(data["track_tiles"][0])
+        self.SCREEN_WIDTH = nb_cols * TILE_LENGTH
+        self.SCREEN_HEIGHT = (nb_rows + 1) * TILE_LENGTH
         self.screen = pg.display.set_mode((self.SCREEN_WIDTH, self.SCREEN_HEIGHT), flags=pg.RESIZABLE | pg.SCALED)
         pg.display.set_caption("Track Switching Game")
 
         # Initializing game entities
-        self.map = LevelMap()
+        self.map = LevelMap(level_file)
         self.trains = []
         self.trains_speed = 1
         self._spawn_new_train()
@@ -71,7 +80,7 @@ class Game:
             # Update
             self._update_speed()
             self._update_trains()
-            self.info_board.update(self.score, self.trains_speed)
+            self.info_board.update(self.map.level_name, self.score, self.trains_speed)
 
             # Re-draw screen
             self.screen.fill(pg.Color("white"))
@@ -143,9 +152,9 @@ class Game:
         # Entry portal should not be the exit portal for any train currently generated
         # Target platform should not be a platform TO BE reached for any current train.
 
-        legal_entry_portals = self.map.input_portals
+        legal_entry_portals = self.map.entry_portals
         legal_platforms = list(self.map.platforms.keys())
-        legal_exit_portals = self.map.output_portals
+        legal_exit_portals = self.map.exit_portals
 
         for train in self.trains:
             if train.spawned:
@@ -158,9 +167,9 @@ class Game:
 
         platform = random.choice(legal_platforms)
         entry_portal = random.choice(list(set(legal_entry_portals) &
-                                          set(self.map.platforms_connecting_portals[platform])))
+                                          set(self.map.platform_portal_connections[platform])))
         exit_portal = random.choice(list(set(legal_exit_portals) &
-                                         set(self.map.platforms_connecting_portals[platform])))
+                                         set(self.map.platform_portal_connections[platform])))
 
         new_train = Train(self.map, entry_portal, platform, exit_portal)
         new_train.spawn()

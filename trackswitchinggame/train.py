@@ -41,11 +41,11 @@ class Train:
         self._wagons.add(WagonSprite("assets/trains/ice_loc.png", True))
 
         # Goals
-        self.entry_portal = entry_portal
-        self.platform = platform
-        self.platform_status = PENDING
-        self.exit_portal = exit_portal
-        self.exit_portal_status = PENDING
+        self._entry_portal = entry_portal
+        self._platform = platform
+        self._platform_status = PENDING
+        self._exit_portal = exit_portal
+        self._exit_portal_status = PENDING
 
         # State variables
         self._spawned = False
@@ -61,7 +61,7 @@ class Train:
         self._font = pg.font.SysFont("Verdana", self._GOAL_INDICATOR_SIZE)
 
         # Prepare trajectory for the spawn
-        portal_tile = self._levelmap.portals[self.entry_portal].sprites()[0]
+        portal_tile = self._levelmap.portals[self._entry_portal].sprites()[0]
         spawn_tile_traj = portal_tile.get_trajectory()
         nb_padding_tiles = math.ceil(self.length / TILE_LENGTH)
         if (portal_tile.get_neighbour(NW) is None) and \
@@ -85,9 +85,9 @@ class Train:
         """
         Update position of the train
         """
-        if self.platform_status == PENDING:
+        if self._platform_status == PENDING:
             self._check_for_platform()
-        elif self.exit_portal_status == PENDING:
+        elif self._exit_portal_status == PENDING:
             self._check_for_exit_portal()
 
         if self.moving:
@@ -127,13 +127,13 @@ class Train:
             # Draw current goal on first front-facing wagon
             goal_indicator = pg.surface.Surface((self._GOAL_INDICATOR_SIZE, self._GOAL_INDICATOR_SIZE))
 
-            if self.platform_status == PENDING:
+            if self._platform_status == PENDING:
                 goal_indicator.fill(pg.Color("lightgreen"))
-                goal_indicator.blit(self._font.render(self.platform, True, pg.Color("black")),
+                goal_indicator.blit(self._font.render(self._platform, True, pg.Color("black")),
                                     (3, 1))
-            elif self.exit_portal_status == PENDING:
+            elif self._exit_portal_status == PENDING:
                 goal_indicator.fill(pg.Color("lightblue"))
-                goal_indicator.blit(self._font.render(self.exit_portal, True, pg.Color("black")),
+                goal_indicator.blit(self._font.render(self._exit_portal, True, pg.Color("black")),
                                     (3, 1))
             else:
                 goal_indicator.set_alpha(0)
@@ -234,27 +234,27 @@ class Train:
 
                 # Change direction based on exit goal
                 train_position = self.trajectory[self.leftmost_position_pointer]
-                exit_portal_position = Vector2(self._levelmap.portals[self.exit_portal].sprites()[0].rect.center)
+                exit_portal_position = Vector2(self._levelmap.portals[self._exit_portal].sprites()[0].rect.center)
                 if train_position.x - exit_portal_position.x > 0:
                     self.direction = BACKWARD
                 else:
                     self.direction = FORWARD
 
                 # Check if platform goal was successful or not
-                if self.platform == platform:
-                    self.platform_status = SUCCEEDED
+                if self._platform == platform:
+                    self._platform_status = SUCCEEDED
                 else:
-                    self.platform_status = FAILED
+                    self._platform_status = FAILED
                 break
 
     def _check_for_exit_portal(self):
         for portal, group in self._levelmap.portals.items():
             tile = group.sprites()[0]
             if self.rect.colliderect(tile.rect):
-                if tile.portal == self.exit_portal:
-                    self.exit_portal_status = SUCCEEDED
+                if tile.portal == self._exit_portal:
+                    self._exit_portal_status = SUCCEEDED
                 else:
-                    self.exit_portal_status = FAILED
+                    self._exit_portal_status = FAILED
                 break
 
     def _update_trajectory(self):
@@ -353,3 +353,25 @@ class Train:
     @property
     def wagons(self) -> pg.sprite.Group:
         return self._wagons
+
+    @property
+    def entry_portal(self) -> str:
+        return self._entry_portal
+
+    @property
+    def platform(self) -> str:
+        return self._platform
+
+    @property
+    def platform_status(self) -> str:
+        return self._platform_status
+
+    @property
+    def exit_portal(self) -> str:
+        return self._exit_portal
+
+    @property
+    def exit_portal_status(self) -> str:
+        return self._exit_portal_status
+
+

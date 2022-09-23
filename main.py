@@ -20,6 +20,7 @@ def parse_argv() -> dict:
     Parse command-line arguments into a dict.
     """
     arg_parser = argparse.ArgumentParser(prog=APP_NAME, description=APP_DESCRIPTION)
+    arg_parser.add_argument("-l", "--level", type=str, dest="level", help="path of level to play")
     arg_parser.add_argument("-d", "--debug", action="store_true", required=False, default=False,
                             help="display debug logging lines")
     args = arg_parser.parse_args()
@@ -44,6 +45,6 @@ if __name__ == '__main__':
 
     # Set-up and run game
     game = Game()
-    game.run()
+    game.run(args["level"])
 
     sys.exit()
