@@ -1,0 +1,22 @@
+{
+  "name": "Stuttgart 21",
+  "author": "Jonathan Larochelle",
+  "track_tiles": [["", "", "", "", "", "", "", "", "dm", "mm", "mm", "mm", "mm+dm", "mm", "mm", "mm+8", "mm+8", "mm+8", "mm", "mm", "mm+md", "mm", "mm", "md", "", "", "", "", "", "", "", "", ""],
+  ["", "", "", "", "", "", "", "du", "", "", "dm", "mm+mu", "mm", "mm", "mm", "mm+7", "mm+7", "mm+7", "mm", "mm", "mm+dm", "mm+um", "mm", "mm+md", "mm+um", "md", "", "", "", "", "", "", ""],
+  ["mm+A", "mm", "mm", "mm", "mm+md", "mm", "mm+mu", "mm", "mm+dm", "mm+mu", "mm", "mm+dm", "mm", "mm", "mm", "mm+6", "mm+6", "mm+6", "mm", "mm+mu", "mm", "md", "", "", "ud", "", "um", "mm", "mm+dm", "mm", "mm", "mm", "mm+E"],
+  ["mm+B", "mm", "mm", "mm", "mm", "mm+um", "mm", "mm+mu", "mm", "mm", "mm+mu", "mm", "mm+md", "mm+dm", "mm", "mm+5", "mm+5", "mm+5", "mm", "mm+md", "mm+dm", "mm", "mm+um", "mm", "mm", "mm+um", "mm", "mm+mu", "mm", "mm", "mm", "mm", "mm+F"],
+  ["mm+C", "mm", "mm", "mm", "mm", "mm+dm", "mm", "mm+md", "mm", "mm", "mm+md", "mm", "mm+mu", "mm+um", "mm", "mm+4", "mm+4", "mm+4", "mm", "mm+mu", "mm+um", "mm", "mm+dm", "mm", "mm", "mm+dm", "mm", "mm+md", "mm", "mm", "mm", "mm", "mm+G"],
+  ["mm+D", "mm", "mm", "mm", "mm+mu", "mm", "md", "", "ud", "", "", "um", "mm", "mm+dm", "mm", "mm+3", "mm+3", "mm+3", "mm", "mm", "mm", "mm+mu", "mm", "mm+dm", "mm+mu", "mm", "mm+dm", "mm", "mm+um", "mm", "mm", "mm", "mm+H"],
+  ["", "", "", "", "", "", "", "um", "mm+md", "mm+um", "mm", "mm+md", "mm+mu", "mm", "mm", "mm+2", "mm+2", "mm+2", "mm", "mm", "mm", "mm+dm", "mu", "", "", "du", "", "", "", "", "", "", ""],
+  ["", "", "", "", "", "", "", "", "", "um", "mm", "mm", "mm+um", "mm", "mm", "mm+1", "mm+1", "mm+1", "mm", "mm", "mm+mu", "mm", "mm", "mm", "mu", "", "", "", "", "", "", "", ""]],
+  "entry_portals": ["C", "D", "E", "F"],
+  "exit_portals": ["A", "B", "G", "H"],
+  "platform_portal_connections": {"1": ["C", "D", "G", "H"],
+    "2": ["C", "D", "G", "H"],
+    "3": ["C", "D", "G", "H"],
+    "4": ["A", "B", "C", "D", "E", "F", "G", "H"],
+    "5": ["A", "B", "C", "D", "E", "F", "G", "H"],
+    "6": ["A", "B", "E", "F"],
+    "7": ["A", "B", "E", "F"],
+    "8": ["A", "B", "E", "F"]}
+}
