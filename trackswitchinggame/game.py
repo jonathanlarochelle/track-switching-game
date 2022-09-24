@@ -40,6 +40,7 @@ class Game:
         self.score = 0
         self.SCREEN_WIDTH = None
         self.SCREEN_HEIGHT = None
+        self.game_over = False
 
     def run(self, level_file: str):
         """
@@ -78,9 +79,10 @@ class Game:
             self._handle_events()
 
             # Update
-            self._update_speed()
-            self._update_trains()
-            self.info_board.update(self.map.level_name, self.score, self.trains_speed)
+            if not self.game_over:
+                self._update_speed()
+                self._update_trains()
+            self.info_board.update(self.map.level_name, self.score, self.trains_speed, self.game_over)
 
             # Re-draw screen
             self.screen.fill(pg.Color("white"))
@@ -92,7 +94,6 @@ class Game:
 
             self.clock.tick(self.FPS)
 
-        # Game loop is over
         self.quit()
 
     def _handle_events(self):
@@ -139,10 +140,20 @@ class Game:
                         if train.exit_portal_status == SUCCEEDED:
                             self.score += 1
 
-                # Check for collisions
-
                 # Update
                 train.update()
+
+        # Check for collisions
+        all_trajectory_points_list = []
+        for train in self.trains:
+            new_trajectory_points = train.trajectory[train.leftmost_position_pointer:train.rightmost_position_pointer]
+            for p in new_trajectory_points:
+                if p in all_trajectory_points_list:
+                    self.game_over = True
+                    break
+            all_trajectory_points_list += new_trajectory_points
+            if self.game_over:
+                break
 
     def _spawn_new_train(self):
         """

@@ -25,8 +25,9 @@ class InformationBoard(pg.surface.Surface):
 
         self._score_label_text = self._bold_font.render("Score", True, pg.Color("white"))
         self._speed_label_text = self._bold_font.render("Speed", True, pg.Color("white"))
+        self._game_over_text = self._bold_font.render("Game over!", True, pg.Color("red"))
 
-    def update(self, level_name: str, score: int, speed: int):
+    def update(self, level_name: str, score: int, speed: int, game_over: bool):
         self.fill(pg.Color("darkblue"))
 
         # Level name
@@ -42,11 +43,17 @@ class InformationBoard(pg.surface.Surface):
         self.blit(score_text, score_text_position)
 
         # Speed
-        speed_offset = score_offset + Vector2(5*TILE_LENGTH, 1)
+        speed_offset = score_offset + Vector2(5*TILE_LENGTH, 0)
         self.blit(self._speed_label_text, speed_offset)
         speed_text = self._font.render(str(speed), True, pg.Color("white"))
         speed_text_position = speed_offset + Vector2(self._speed_label_text.get_rect().width, 0) + Vector2(5, 0)
         self.blit(speed_text, speed_text_position)
+
+        # Game over text
+        game_over_offset = speed_offset + Vector2(5*TILE_LENGTH, 0)
+        if game_over:
+            self.blit(self._game_over_text, game_over_offset)
+
 
     def draw(self, surface, position):
         surface.blit(self, position)

@@ -30,7 +30,7 @@ class Train:
 
     def __init__(self, levelmap: LevelMap, entry_portal: str, platform: str, exit_portal: str):
         self._levelmap = levelmap
-        self.trajectory = list()
+        self._trajectory = list()
         self.rightmost_position_pointer = None  # Initialized when calling spawn()
         self.speed = 1
 
@@ -68,16 +68,16 @@ class Train:
                 (portal_tile.get_neighbour(W) is None) and \
                 (portal_tile.get_neighbour(SW) is None):
             for i in range(nb_padding_tiles * TILE_LENGTH):
-                self.trajectory.append(Vector2(-(nb_padding_tiles * TILE_LENGTH) + i, spawn_tile_traj[0].y))
-            self.trajectory += spawn_tile_traj
+                self._trajectory.append(Vector2(-(nb_padding_tiles * TILE_LENGTH) + i, spawn_tile_traj[0].y))
+            self._trajectory += spawn_tile_traj
             self.direction = FORWARD
-            self.rightmost_position_pointer = len(self.trajectory) - 1
+            self.rightmost_position_pointer = len(self._trajectory) - 1
         elif (portal_tile.get_neighbour(NE) is None) and \
                 (portal_tile.get_neighbour(E) is None) and \
                 (portal_tile.get_neighbour(SE) is None):
-            self.trajectory += spawn_tile_traj
+            self._trajectory += spawn_tile_traj
             for i in range(nb_padding_tiles * TILE_LENGTH):
-                self.trajectory.append(Vector2(spawn_tile_traj[-1].x + i, spawn_tile_traj[0].y))
+                self._trajectory.append(Vector2(spawn_tile_traj[-1].x + i, spawn_tile_traj[0].y))
             self.direction = BACKWARD
             self.leftmost_position_pointer = 0
 
@@ -94,7 +94,7 @@ class Train:
             # Update position
             self._update_trajectory()
             self.rightmost_position_pointer += self.trajectory_pointer_increment
-            if self.rightmost_position_pointer >= len(self.trajectory) or self.leftmost_position_pointer < 0:
+            if self.rightmost_position_pointer >= len(self._trajectory) or self.leftmost_position_pointer < 0:
                 # No trajectory defined, we do not move.
                 self.rightmost_position_pointer -= self.trajectory_pointer_increment
             else:
@@ -105,11 +105,11 @@ class Train:
                     # Do we want wagons to have a variable axle offset??
                     axle_1_pointer = current_offset - 5
                     axle_2_pointer = current_offset - 24
-                    position_axle_1 = self.trajectory[axle_1_pointer]
-                    position_axle_2 = self.trajectory[axle_2_pointer]
+                    position_axle_1 = self._trajectory[axle_1_pointer]
+                    position_axle_2 = self._trajectory[axle_2_pointer]
                     wagon.update(position_axle_1, position_axle_2)
                     current_offset -= wagon.length
-                    wagon.rect.x = self.trajectory[current_offset + 1].x
+                    wagon.rect.x = self._trajectory[current_offset + 1].x
 
         if self.waiting:
             if pg.time.get_ticks() > self._wait_end:
@@ -191,8 +191,8 @@ class Train:
             # Do we want wagons to have a variable axle offset??
             axle_1_pointer = current_offset - 5
             axle_2_pointer = current_offset - 24
-            position_axle_1 = self.trajectory[axle_1_pointer]
-            position_axle_2 = self.trajectory[axle_2_pointer]
+            position_axle_1 = self._trajectory[axle_1_pointer]
+            position_axle_2 = self._trajectory[axle_2_pointer]
             wagon.update(position_axle_1, position_axle_2)
             current_offset -= wagon.length
 
@@ -216,7 +216,7 @@ class Train:
         """
         Checks if the train collides a Rect.
         """
-        for point in self.trajectory[self.leftmost_position_pointer:self.rightmost_position_pointer]:
+        for point in self._trajectory[self.leftmost_position_pointer:self.rightmost_position_pointer]:
             if rect.collidepoint(point.x, point.y):
                 return True
         return False
@@ -233,7 +233,7 @@ class Train:
                 self.wait(self.WAIT_DELAY_VS_SPEED[self.speed])
 
                 # Change direction based on exit goal
-                train_position = self.trajectory[self.leftmost_position_pointer]
+                train_position = self._trajectory[self.leftmost_position_pointer]
                 exit_portal_position = Vector2(self._levelmap.portals[self._exit_portal].sprites()[0].rect.center)
                 if train_position.x - exit_portal_position.x > 0:
                     self.direction = BACKWARD
@@ -259,51 +259,51 @@ class Train:
 
     def _update_trajectory(self):
         if self.direction == FORWARD:
-            if (self.rightmost_position_pointer + self.trajectory_pointer_increment) >= len(self.trajectory):
+            if (self.rightmost_position_pointer + self.trajectory_pointer_increment) >= len(self._trajectory):
                 # We need to fetch trajectory information from next tile
-                train_vector = self.trajectory[-1] - self.trajectory[-2]
-                next_tile_position = self.trajectory[-1] + train_vector
+                train_vector = self._trajectory[-1] - self._trajectory[-2]
+                next_tile_position = self._trajectory[-1] + train_vector
                 next_tile = self._levelmap.tile_at(next_tile_position)
                 if next_tile:
                     new_trajectory = next_tile.get_trajectory()
                     # Check if our entry point is valid for the next tile
                     if next_tile_position in new_trajectory:
-                        self.trajectory += new_trajectory
+                        self._trajectory += new_trajectory
                 else:
                     # No next tile, which means we are headed out of playing field.
                     # Padding with a straight trajectory for now.
-                    last_point = self.trajectory[-1]
-                    self.trajectory += [last_point + Vector2(i, 0) for i in range(TILE_LENGTH)]
+                    last_point = self._trajectory[-1]
+                    self._trajectory += [last_point + Vector2(i, 0) for i in range(TILE_LENGTH)]
 
             if (self.leftmost_position_pointer + self.trajectory_pointer_increment) >= TILE_LENGTH:
                 # We can delete trajectory information from last tile
-                self.trajectory = self.trajectory[TILE_LENGTH:]
+                self._trajectory = self._trajectory[TILE_LENGTH:]
                 self.rightmost_position_pointer -= TILE_LENGTH
 
         elif self.direction == BACKWARD:
             if (self.leftmost_position_pointer + self.trajectory_pointer_increment) < 0:
                 # We need to fetch trajectory information from previous tile
-                train_vector = self.trajectory[0] - self.trajectory[1]
-                next_tile_position = self.trajectory[0] + train_vector
+                train_vector = self._trajectory[0] - self._trajectory[1]
+                next_tile_position = self._trajectory[0] + train_vector
                 next_tile = self._levelmap.tile_at(next_tile_position)
                 if next_tile:
                     new_trajectory = next_tile.get_trajectory()
                     # Check if our entry point is valid for the next tile
                     if next_tile_position in new_trajectory:
-                        self.trajectory = new_trajectory + self.trajectory
+                        self._trajectory = new_trajectory + self._trajectory
                         self.rightmost_position_pointer += TILE_LENGTH
                 else:
                     # No next tile, which means we are headed out of playing field.
                     # Padding with a straight trajectory for now.
-                    last_point = self.trajectory[0]
-                    self.trajectory = [last_point + Vector2(-TILE_LENGTH + i, 0) for i in
-                                       range(TILE_LENGTH)] + self.trajectory
+                    last_point = self._trajectory[0]
+                    self._trajectory = [last_point + Vector2(-TILE_LENGTH + i, 0) for i in
+                                        range(TILE_LENGTH)] + self._trajectory
                     self.rightmost_position_pointer += TILE_LENGTH
 
             if (self.rightmost_position_pointer + self.trajectory_pointer_increment) < (
-                    len(self.trajectory) - TILE_LENGTH):
+                    len(self._trajectory) - TILE_LENGTH):
                 # We can delete trajectory information from last tile
-                self.trajectory = self.trajectory[:-TILE_LENGTH]
+                self._trajectory = self._trajectory[:-TILE_LENGTH]
 
     @property
     def leftmost_position_pointer(self):
@@ -373,5 +373,9 @@ class Train:
     @property
     def exit_portal_status(self) -> str:
         return self._exit_portal_status
+
+    @property
+    def trajectory(self) -> list[Vector2]:
+        return self._trajectory
 
 
