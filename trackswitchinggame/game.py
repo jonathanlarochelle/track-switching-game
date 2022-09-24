@@ -35,7 +35,12 @@ class Game:
     GAME_PARAMETERS = {0: {"train_speed": 1, "min_time_between_spawn": 25000, "max_spawned_trains": 2, "platform_wait_delay": 3000, "portal_wait_delay": 5000},
                        2: {"train_speed": 1, "min_time_between_spawn": 15000, "max_spawned_trains": 3, "platform_wait_delay": 3000, "portal_wait_delay": 5000},
                        6: {"train_speed": 1, "min_time_between_spawn": 7000, "max_spawned_trains": 4, "platform_wait_delay": 3000, "portal_wait_delay": 5000},
-                       10: {"train_speed": 1, "min_time_between_spawn": 1000, "max_spawned_trains": 5, "platform_wait_delay": 3000, "portal_wait_delay": 5000}}
+                       10: {"train_speed": 1, "min_time_between_spawn": 1000, "max_spawned_trains": 5, "platform_wait_delay": 3000, "portal_wait_delay": 5000},
+                       20: {"train_speed": 2, "min_time_between_spawn": 14000, "max_spawned_trains": 2, "platform_wait_delay": 3000, "portal_wait_delay": 5000},
+                       24: {"train_speed": 2, "min_time_between_spawn": 10000, "max_spawned_trains": 3, "platform_wait_delay": 3000, "portal_wait_delay": 5000},
+                       30: {"train_speed": 2, "min_time_between_spawn": 6000, "max_spawned_trains": 4, "platform_wait_delay": 3000, "portal_wait_delay": 5000},
+                       38: {"train_speed": 2, "min_time_between_spawn": 1000, "max_spawned_trains": 5, "platform_wait_delay": 3000, "portal_wait_delay": 5000},
+                       50: {"train_speed": 3, "min_time_between_spawn": 14000, "max_spawned_trains": 2, "platform_wait_delay": 3000, "portal_wait_delay": 5000}}
 
     def __init__(self):
         pg.init()
@@ -131,16 +136,11 @@ class Game:
         """
         Update game progression based on current score.
         """
-        new_game_parameters = None
         for score_threshold, game_parameters in self.GAME_PARAMETERS.items():
             if self.score < score_threshold:
                 break
             else:
-                new_game_parameters = game_parameters
-
-        # If we have passed a new speed threshold.
-        if new_game_parameters != self.game_parameters:
-            self.game_parameters = new_game_parameters
+                self.game_parameters = game_parameters
 
     def _update_trains(self):
         """
@@ -205,9 +205,8 @@ class Game:
         for train in self.trains:
             if train.spawned and train_is_valid:
                 # If a train is still on the portal, do not spawn there.
-                if train.entry_portal == entry_portal:
-                    if train.colliderect(self.map.portals[train.entry_portal].sprites()[0].rect):
-                        train_is_valid = False
+                if train.colliderect(self.map.portals[entry_portal].sprites()[0].rect):
+                    train_is_valid = False
                 # If an existing train is headed to the portal, do not spawn there.
                 if train.exit_portal == exit_portal:
                     train_is_valid = False
