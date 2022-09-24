@@ -92,12 +92,8 @@ class TrackTile(pg.sprite.Sprite):
         # Portals and platforms have specific background text and colors
         if self._portal is not None:
             self.image.fill(pg.Color("lightblue"))
-            text = self._font.render(self._portal, True, pg.Color("darkblue"))
-            self.image.blit(text, (3, 1))
         elif self._platform is not None:
             self.image.fill(pg.Color("lightgreen"))
-            text = self._font.render(self._platform, True, pg.Color("darkgreen"))
-            self.image.blit(text, (6, 1))
         else:
             self.image.fill(pg.Color("white"))
 
@@ -107,7 +103,7 @@ class TrackTile(pg.sprite.Sprite):
             tmp_tile = pg.image.load(f"assets/tiles/{self._main_path}.png").convert_alpha()
         elif self._active_path == "main" and self._alt_path:
             tmp_tile = pg.image.load(f"assets/tiles/{self._alt_path}.png").convert_alpha()
-        tmp_tile.set_alpha(128)
+        tmp_tile.set_alpha(84)
         self.image.blit(tmp_tile, (0, 0))
 
         # Draw active path in black
@@ -116,6 +112,14 @@ class TrackTile(pg.sprite.Sprite):
         elif self._active_path == "alt" and self._alt_path:
             tmp_tile = pg.image.load(f"assets/tiles/{self._alt_path}.png").convert_alpha()
         self.image.blit(tmp_tile, (0, 0))
+
+        # Write text for portals, platforms
+        if self._portal is not None:
+            text = self._font.render(self._portal, True, pg.Color("darkblue"))
+            self.image.blit(text, (3, 1))
+        elif self._platform is not None:
+            text = self._font.render(self._platform, True, pg.Color("darkgreen"))
+            self.image.blit(text, (6, 1))
 
         if DEBUG:
             # Draw trajectory in red on top (debug)

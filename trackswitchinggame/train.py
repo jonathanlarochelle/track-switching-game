@@ -22,17 +22,11 @@ class Train:
     The train's movement follow points stored in trajectory.
     """
 
-    WAIT_DELAY_VS_SPEED = {1: 5000,
-                           2: 4000,
-                           3: 3000,
-                           4: 2000,
-                           5: 1000}
-
-    def __init__(self, levelmap: LevelMap, entry_portal: str, platform: str, exit_portal: str):
+    def __init__(self, levelmap: LevelMap, entry_portal: str, spawn_wait_time: int, platform: str, platform_wait_time: int, exit_portal: str, speed: int):
         self._levelmap = levelmap
         self._trajectory = list()
         self.rightmost_position_pointer = None  # Initialized when calling spawn()
-        self.speed = 1
+        self._speed = speed
 
         # Set-up wagons
         self._wagons = pg.sprite.Group()
@@ -42,7 +36,9 @@ class Train:
 
         # Goals
         self._entry_portal = entry_portal
+        self._spawn_wait_time = spawn_wait_time
         self._platform = platform
+        self._platform_wait_time = platform_wait_time
         self._platform_status = PENDING
         self._exit_portal = exit_portal
         self._exit_portal_status = PENDING
@@ -182,7 +178,7 @@ class Train:
         """
         self._spawned = True
         self.start(self.direction)
-        self.wait(self.WAIT_DELAY_VS_SPEED[self.speed])
+        self.wait(self._spawn_wait_time)
 
         # This update allows the train to appear at the right position, even though it is currently waiting.
         current_offset = self.rightmost_position_pointer
@@ -230,7 +226,7 @@ class Train:
                 else:
                     rect = rect.union(sprite.rect)
             if rect.contains(self.rect):
-                self.wait(self.WAIT_DELAY_VS_SPEED[self.speed])
+                self.wait(self._platform_wait_time)
 
                 # Change direction based on exit goal
                 train_position = self._trajectory[self.leftmost_position_pointer]
@@ -317,9 +313,9 @@ class Train:
     def trajectory_pointer_increment(self):
         if self.moving:
             if self.direction == FORWARD:
-                return self.speed
+                return self._speed
             elif self.direction == BACKWARD:
-                return -1*self.speed
+                return -1*self._speed
         else:
             return 0
 

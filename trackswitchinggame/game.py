@@ -20,13 +20,22 @@ class Game:
     Game class. Start the game with the run() method.
     """
 
+    # Speed & amount of trains
+    # Score | Nb of trains | Speed
+    # 0       1-2            1
+    # 6       3              1
+    # 12      4              1
+    # 18      5              1
+    # 25      1-2            2
+    # ...
+
     FPS = 30
 
-    SPAWN_DELAY_VS_SPEED = {1: 15000,
-                            2: 12000,
-                            3: 9000,
-                            4: 7000,
-                            5: 5000}
+    # Average time on screen of each trains will depend on the map size, but for now we do "one size fits all"
+    GAME_PARAMETERS = {0: {"train_speed": 1, "min_time_between_spawn": 25000, "max_spawned_trains": 2, "platform_wait_delay": 3000, "portal_wait_delay": 5000},
+                       2: {"train_speed": 1, "min_time_between_spawn": 15000, "max_spawned_trains": 3, "platform_wait_delay": 3000, "portal_wait_delay": 5000},
+                       6: {"train_speed": 1, "min_time_between_spawn": 7000, "max_spawned_trains": 4, "platform_wait_delay": 3000, "portal_wait_delay": 5000},
+                       10: {"train_speed": 1, "min_time_between_spawn": 1000, "max_spawned_trains": 5, "platform_wait_delay": 3000, "portal_wait_delay": 5000}}
 
     def __init__(self):
         pg.init()
@@ -36,11 +45,12 @@ class Game:
         self.map = None
         self.trains = []
         self.info_board = None
-        self.trains_speed = 0
         self.score = 0
         self.SCREEN_WIDTH = None
         self.SCREEN_HEIGHT = None
         self.game_over = False
+        self.game_parameters = self.GAME_PARAMETERS[0]
+        self.nb_spawned_trains = 0
 
     def run(self, level_file: str):
         """
@@ -60,7 +70,6 @@ class Game:
         # Initializing game entities
         self.map = LevelMap(level_file)
         self.trains = []
-        self.trains_speed = 1
         self._spawn_new_train()
 
         # Initializing game clock
@@ -79,10 +88,10 @@ class Game:
             self._handle_events()
 
             # Update
+            self._update_game_progression()
             if not self.game_over:
-                self._update_speed()
                 self._update_trains()
-            self.info_board.update(self.map.level_name, self.score, self.trains_speed, self.game_over)
+            self.info_board.update(self.map.level_name, self.score, self.game_parameters["train_speed"], self.game_over)
 
             # Re-draw screen
             self.screen.fill(pg.Color("white"))
@@ -114,9 +123,24 @@ class Game:
                             break
                     else:
                         clicked_tile.switch_track()
-            if event.type == pg.KEYDOWN and event.key == pg.K_RETURN and DEBUG:
+            if event.type == pg.KEYDOWN and event.key == pg.K_RETURN:
                 # Debug key to break execution
-                print("Breakpoint activated.")
+                pass
+
+    def _update_game_progression(self):
+        """
+        Update game progression based on current score.
+        """
+        new_game_parameters = None
+        for score_threshold, game_parameters in self.GAME_PARAMETERS.items():
+            if self.score < score_threshold:
+                break
+            else:
+                new_game_parameters = game_parameters
+
+        # If we have passed a new speed threshold.
+        if new_game_parameters != self.game_parameters:
+            self.game_parameters = new_game_parameters
 
     def _update_trains(self):
         """
@@ -125,9 +149,10 @@ class Game:
         - calls .update() for all trains
         - handles despawning and score counting
         """
-        # Spawn new train
-        if pg.time.get_ticks() > self._last_train_spawned + self.SPAWN_DELAY_VS_SPEED[self.trains_speed]:
-            self._spawn_new_train()
+        # Spawn new train if delay has passed and if nb of spawned trains is currently below the max. allowed number.
+        if pg.time.get_ticks() > self._last_train_spawned + self.game_parameters["min_time_between_spawn"]:
+            if self.nb_spawned_trains < self.game_parameters["max_spawned_trains"]:
+                self._spawn_new_train()
 
         for train in self.trains:
             if train.spawned:
@@ -135,6 +160,7 @@ class Game:
                 if not train.platform_status == PENDING and not train.exit_portal_status == PENDING:
                     if not train.rect.colliderect(self.map.get_playing_field_rect()):
                         train.despawn()
+                        self.nb_spawned_trains -= 1
                         if train.platform_status == SUCCEEDED:
                             self.score += 1
                         if train.exit_portal_status == SUCCEEDED:
@@ -146,14 +172,15 @@ class Game:
         # Check for collisions
         all_trajectory_points_list = []
         for train in self.trains:
-            new_trajectory_points = train.trajectory[train.leftmost_position_pointer:train.rightmost_position_pointer]
-            for p in new_trajectory_points:
-                if p in all_trajectory_points_list:
-                    self.game_over = True
+            if train.spawned:
+                new_trajectory_points = train.trajectory[train.leftmost_position_pointer:train.rightmost_position_pointer]
+                for p in new_trajectory_points:
+                    if p in all_trajectory_points_list:
+                        self.game_over = True
+                        break
+                all_trajectory_points_list += new_trajectory_points
+                if self.game_over:
                     break
-            all_trajectory_points_list += new_trajectory_points
-            if self.game_over:
-                break
 
     def _spawn_new_train(self):
         """
@@ -167,39 +194,34 @@ class Game:
         legal_platforms = list(self.map.platforms.keys())
         legal_exit_portals = self.map.exit_portals
 
-        for train in self.trains:
-            if train.spawned:
-                if train.exit_portal in legal_entry_portals:
-                    legal_entry_portals.remove(train.exit_portal)
-                if train.platform in legal_platforms and \
-                        train.platform_status == PENDING and \
-                        train.moving:
-                    legal_platforms.remove(train.platform)
-
         platform = random.choice(legal_platforms)
         entry_portal = random.choice(list(set(legal_entry_portals) &
                                           set(self.map.platform_portal_connections[platform])))
         exit_portal = random.choice(list(set(legal_exit_portals) &
                                          set(self.map.platform_portal_connections[platform])))
 
-        new_train = Train(self.map, entry_portal, platform, exit_portal)
-        new_train.spawn()
-        new_train.speed = self.trains_speed
-        self.trains.append(new_train)
-        self._last_train_spawned = pg.time.get_ticks()
+        # If train is invalid, try again later.
+        train_is_valid = True
+        for train in self.trains:
+            if train.spawned and train_is_valid:
+                # If a train is still on the portal, do not spawn there.
+                if train.entry_portal == entry_portal:
+                    if train.colliderect(self.map.portals[train.entry_portal].sprites()[0].rect):
+                        train_is_valid = False
+                # If an existing train is headed to the portal, do not spawn there.
+                if train.exit_portal == exit_portal:
+                    train_is_valid = False
+                # If an existing train is headed to the platform, do not select this platform.
+                if train.platform == platform and train.platform_status == PENDING:
+                    train_is_valid = False
 
-    def _update_speed(self):
-        """
-        If certain criteria are met, change the trains speed.
-        """
-        if self.score >= 10:
-            self.trains_speed = 2
-        if self.score >= 20:
-            self.trains_speed = 3
-        if self.score >= 30:
-            self.trains_speed = 4
-        if self.score >= 40:
-            self.trains_speed = 5
+        if train_is_valid:
+            new_train = Train(self.map, entry_portal, self.game_parameters["portal_wait_delay"], platform,
+                              self.game_parameters["platform_wait_delay"], exit_portal, self.game_parameters["train_speed"])
+            new_train.spawn()
+            self.trains.append(new_train)
+            self._last_train_spawned = pg.time.get_ticks()
+            self.nb_spawned_trains += 1
 
     def quit(self):
         """
