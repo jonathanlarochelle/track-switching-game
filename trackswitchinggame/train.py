@@ -56,9 +56,9 @@ class Train:
         self._wait_total = 0
 
         # Indicators
-        self._GOAL_INDICATOR_SIZE = 10
+        self._GOAL_INDICATOR_SIZE = 12
         self._WAIT_INDICATOR_SIZE = 14
-        self._font = pg.font.SysFont("Verdana", self._GOAL_INDICATOR_SIZE)
+        self._font = pg.font.SysFont("Verdana", self._GOAL_INDICATOR_SIZE+2)
 
         # Prepare trajectory for the spawn
         portal_tile = self._levelmap.portals[self._entry_portal].sprites()[0]
@@ -130,11 +130,11 @@ class Train:
             if self._platform_status == PENDING:
                 goal_indicator.fill(pg.Color("lightgreen"))
                 goal_indicator.blit(self._font.render(self._platform, True, pg.Color("black")),
-                                    (3, 1))
+                                    (2, -1))
             elif self._exit_portal_status == PENDING:
                 goal_indicator.fill(pg.Color("lightblue"))
                 goal_indicator.blit(self._font.render(self._exit_portal, True, pg.Color("black")),
-                                    (3, 1))
+                                    (2, -1))
             else:
                 goal_indicator.set_alpha(0)
 
