@@ -40,7 +40,19 @@ class Game:
                        24: {"train_speed": 2, "min_time_between_spawn": 10000, "max_spawned_trains": 3, "platform_wait_delay": 3000, "portal_wait_delay": 5000},
                        30: {"train_speed": 2, "min_time_between_spawn": 6000, "max_spawned_trains": 4, "platform_wait_delay": 3000, "portal_wait_delay": 5000},
                        38: {"train_speed": 2, "min_time_between_spawn": 1000, "max_spawned_trains": 5, "platform_wait_delay": 3000, "portal_wait_delay": 5000},
-                       50: {"train_speed": 3, "min_time_between_spawn": 14000, "max_spawned_trains": 2, "platform_wait_delay": 3000, "portal_wait_delay": 5000}}
+                       50: {"train_speed": 3, "min_time_between_spawn": 10000, "max_spawned_trains": 2, "platform_wait_delay": 3000, "portal_wait_delay": 5000},
+                       54: {"train_speed": 3, "min_time_between_spawn": 7000, "max_spawned_trains": 3, "platform_wait_delay": 3000, "portal_wait_delay": 5000},
+                       60: {"train_speed": 3, "min_time_between_spawn": 5000, "max_spawned_trains": 4, "platform_wait_delay": 3000, "portal_wait_delay": 5000},
+                       68: {"train_speed": 3, "min_time_between_spawn": 1000, "max_spawned_trains": 5, "platform_wait_delay": 3000, "portal_wait_delay": 5000},
+                       80: {"train_speed": 4, "min_time_between_spawn": 8000, "max_spawned_trains": 2, "platform_wait_delay": 3000, "portal_wait_delay": 5000},
+                       84: {"train_speed": 4, "min_time_between_spawn": 6000, "max_spawned_trains": 3, "platform_wait_delay": 3000, "portal_wait_delay": 5000},
+                       90: {"train_speed": 4, "min_time_between_spawn": 4000, "max_spawned_trains": 4, "platform_wait_delay": 3000, "portal_wait_delay": 5000},
+                       98: {"train_speed": 4, "min_time_between_spawn": 1000, "max_spawned_trains": 5, "platform_wait_delay": 3000, "portal_wait_delay": 5000},
+                       100: {"train_speed": 5, "min_time_between_spawn": 6000, "max_spawned_trains": 2, "platform_wait_delay": 3000, "portal_wait_delay": 5000},
+                       104: {"train_speed": 5, "min_time_between_spawn": 5000, "max_spawned_trains": 3, "platform_wait_delay": 3000, "portal_wait_delay": 5000},
+                       110: {"train_speed": 5, "min_time_between_spawn": 3000, "max_spawned_trains": 4, "platform_wait_delay": 3000, "portal_wait_delay": 5000},
+                       118: {"train_speed": 5, "min_time_between_spawn": 1000, "max_spawned_trains": 5, "platform_wait_delay": 3000, "portal_wait_delay": 5000},
+                       130: {"train_speed": 6, "min_time_between_spawn": 0, "max_spawned_trains": 2, "platform_wait_delay": 3000, "portal_wait_delay": 5000}}
 
     def __init__(self):
         pg.init()
